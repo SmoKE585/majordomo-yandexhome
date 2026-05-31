@@ -222,10 +222,14 @@ script.onload = function() {
         for (const traitKey in traits_list) {
             if (!traits_list.hasOwnProperty(traitKey)) continue;
             if (typeof(traits_list[traitKey].value_map_preset) === 'undefined') {
-               traits_list[traitKey].value_map_preset = 'none';
+               traits_list[traitKey].value_map_preset = (traits_list[traitKey].type === 'on') ? 'bool_onoff_10' : 'none';
             }
             if (typeof(traits_list[traitKey].value_map) === 'undefined' || traits_list[traitKey].value_map === null) {
-               traits_list[traitKey].value_map = {};
+               if (traits_list[traitKey].type === 'on') {
+                  traits_list[traitKey].value_map = {'1':'on','0':'off','true':'on','false':'off'};
+               } else {
+                  traits_list[traitKey].value_map = {};
+               }
             }
             traits_list[traitKey].reportable = asBool(traits_list[traitKey].reportable);
          }
@@ -618,29 +622,30 @@ function addTraitRow(linked_type, linked_description, linked_object, linked_prop
 
    card.append($(`<div class="yh-trait-card-body"><input type="hidden" class="form-control" name="trait_type" value="${linked_type}"></div>`));
    let bodyCell = card.find('.yh-trait-card-body');
-   let grid = $('<div class="yh-trait-grid"></div>');
-   bodyCell.append(grid);
+   let mainRow = $('<div class="yh-trait-main-row"></div>');
+   bodyCell.append(mainRow);
 
    // Привязанный объект.
    let objectSelect = $(`<select id="linked_object${linked_type}" name="linked_object${linked_type}" class="selectpicker" title="Выберите объект" data-live-search="true" data-width="100%" onChange="linkedObjectChaged('${linked_type}', this.value);"><option data-content="" value=""></option></select>`);
    let objectField = $('<div class="yh-trait-field"></div>').append('<div class="yh-trait-label">Объект</div>').append(objectSelect);
-   grid.append(objectField);
+   mainRow.append(objectField);
 
    renderObjectSelectbox('linked_object' + linked_type, linked_object);
 
    // Привязанное свойство.
    let propSelect = $(`<select id="linked_property${linked_type}" name="linked_property${linked_type}" class="selectpicker" title="Укажите свойство" data-width="100%" onChange="linkedPropertyChaged('${linked_type}', this.value);"></select>`);
    let propField = $('<div class="yh-trait-field"></div>').append('<div class="yh-trait-label">Свойство</div>').append(propSelect);
-   grid.append(propField);
+   mainRow.append(propField);
 
    renderPropertySelectbox('linked_property' + linked_type, linked_object, linked_property);
 
    let mapPresetField = $('<div class="yh-trait-field yh-trait-map-field"></div>')
       .append('<div class="yh-trait-label">Соответствия MJDM -> Yandex</div>')
       .append($('<select id="value_map_preset_' + linked_type + '" class="selectpicker" data-width="100%" onchange="changeTraitValueMapPreset(\'' + linked_type + '\', this.value);">' + map_preset_options + '</select>'));
-   grid.append(mapPresetField);
+   bodyCell.append('<div class="yh-trait-map-hint alert alert-info">В MJDM и Яндекс значения могут храниться по-разному, поэтому тут можно настроить соответствие значений.</div>');
+   bodyCell.append(mapPresetField);
    let mapEditorField = $('<div class="yh-trait-field yh-trait-map-editor-field"><div id="value_map_editor_' + linked_type + '" class="yh-map-editor"></div></div>');
-   grid.append(mapEditorField);
+   bodyCell.append(mapEditorField);
 
    let reportable_btn_class = reportable ? 'btn-success' : 'btn-default';
    let reportable_btn_text = reportable ? 'Репорт: Вкл' : 'Репорт: Выкл';
@@ -658,8 +663,8 @@ function addTraitRow(linked_type, linked_description, linked_object, linked_prop
 
 
    // Действия карточки.
-   let actionsBlock = $(`<div class="yh-trait-actions"><div class="yh-trait-actions-label">Действия</div><button type="button" id="${linked_type}" class="btn btn-xs btn-default" title="Удалить умение" onclick="deleteTrait($(this).attr('id'));"><i class="glyphicon glyphicon-trash"></i>&nbsp;Удалить</button>[#if REPORTABLE_CONFIGURED="1"#]<button type="button" title="Система будет автоматически отправлять изменения в Яндекс. (Требуется настройка)" id="${linked_type}" class="btn btn-xs ${reportable_btn_class} reportableBtn" onclick="addReportable($(this).attr('id'));"><i class="glyphicon glyphicon-retweet"></i>&nbsp;${reportable_btn_text}</button>[#endif#]${split_options}</div>`);
-   grid.append(actionsBlock);
+   let actionsBlock = $(`<div class="yh-trait-actions"><div class="btn-group btn-group-xs" role="group"><button type="button" id="${linked_type}" class="btn btn-default" title="Удалить умение" onclick="deleteTrait($(this).attr('id'));"><i class="glyphicon glyphicon-trash"></i></button>[#if REPORTABLE_CONFIGURED="1"#]<button type="button" title="Система будет автоматически отправлять изменения в Яндекс. (Требуется настройка)" id="${linked_type}" class="btn ${reportable_btn_class} reportableBtn" onclick="addReportable($(this).attr('id'));"><i class="glyphicon glyphicon-retweet"></i></button>[#endif#]${split_options}</div></div>`);
+   mainRow.append(actionsBlock);
 
    $('#trait_type_select_' + linked_type).selectpicker('render');
    $('#trait_type_select_' + linked_type).selectpicker('refresh');
@@ -681,8 +686,13 @@ function addTrait() {
       traits_list[trait_type].linked_object = '';
       traits_list[trait_type].linked_property = '';
       traits_list[trait_type].reportable = false;
-      traits_list[trait_type].value_map_preset = 'none';
-      traits_list[trait_type].value_map = {};
+      if (trait_type === 'on') {
+         traits_list[trait_type].value_map_preset = 'bool_onoff_10';
+         traits_list[trait_type].value_map = {'1':'on','0':'off','true':'on','false':'off'};
+      } else {
+         traits_list[trait_type].value_map_preset = 'none';
+         traits_list[trait_type].value_map = {};
+      }
       saveTraitsList();
 
       isPopover = false;
@@ -907,51 +917,43 @@ function escapeHtml(string) {
    margin-bottom: 4px;
 }
 
-.yh-trait-grid {
-   display: grid;
-   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(220px, 1fr) 170px;
-   gap: 10px;
-   align-items: end;
-   width: 100%;
-}
-
 .yh-trait-actions {
    display: flex;
    align-items: center;
-   justify-content: flex-start;
-   flex-wrap: wrap;
-   gap: 6px;
-   padding-left: 10px;
-   border-left: 1px solid #e5e9ef;
-   min-height: 52px;
+   justify-content: flex-end;
+   min-height: 34px;
 }
 
-.yh-trait-grid .bootstrap-select {
+.yh-trait-map-editor-field {
+   width: 100%;
+}
+
+.yh-trait-map-field {
+   width: 100%;
+}
+
+.yh-trait-main-row {
+   display: grid;
+   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+   gap: 10px;
+   align-items: end;
+}
+
+.yh-trait-main-row .bootstrap-select,
+.yh-trait-map-field .bootstrap-select {
    width: 100% !important;
    max-width: 100%;
 }
 
-.yh-trait-grid .bootstrap-select > .dropdown-toggle {
+.yh-trait-main-row .bootstrap-select > .dropdown-toggle,
+.yh-trait-map-field .bootstrap-select > .dropdown-toggle {
    width: 100%;
 }
 
-.yh-trait-grid .dropdown-menu {
-   min-width: 100%;
-}
-
-.yh-trait-actions-label {
-   color: #7c8795;
-   font-size: 11px;
-   width: 100%;
-   margin-right: 0;
-}
-
-.yh-trait-map-editor-field {
-   grid-column: 1 / -1;
-}
-
-.yh-trait-map-field {
-   grid-column: 1 / -1;
+.yh-trait-map-hint {
+   margin: 10px 0 8px 0;
+   padding: 6px 10px;
+   font-size: 12px;
 }
 
 .yh-map-editor {
@@ -982,27 +984,18 @@ function escapeHtml(string) {
 }
 
 @media (max-width: 1200px) {
-   .yh-trait-grid {
+   .yh-trait-main-row {
       grid-template-columns: 1fr 1fr;
-   }
-
-   .yh-trait-map-field,
-   .yh-trait-map-editor-field {
-      grid-column: 1 / -1;
    }
 
    .yh-trait-actions {
       grid-column: 1 / -1;
-      border-left: 0;
-      border-top: 1px solid #e5e9ef;
-      padding-left: 0;
-      padding-top: 8px;
-      min-height: 0;
+      justify-content: flex-start;
    }
 }
 
 @media (max-width: 768px) {
-   .yh-trait-grid {
+   .yh-trait-main-row {
       grid-template-columns: 1fr;
    }
 

@@ -470,10 +470,14 @@ class yandexhome extends module
                   }
                }
                if (!isset($trait_data['value_map_preset'])) {
-                  $trait_data['value_map_preset'] = 'none';
+                  $trait_data['value_map_preset'] = ($trait_type === 'on') ? 'bool_onoff_10' : 'none';
                }
                if (!isset($trait_data['value_map']) || !is_array($trait_data['value_map'])) {
-                  $trait_data['value_map'] = [];
+                  if ($trait_type === 'on') {
+                     $trait_data['value_map'] = ['1' => 'on', '0' => 'off', 'true' => 'on', 'false' => 'off'];
+                  } else {
+                     $trait_data['value_map'] = [];
+                  }
                }
                $normalized_traits[$trait_type] = $trait_data;
             }
@@ -1207,7 +1211,17 @@ class yandexhome extends module
 
       switch ($value_type) {
          case 'bool':
-            return $value ? true : false;
+            if (is_bool($value)) {
+               return $value;
+            }
+            $normalized = strtolower(trim((string)$value));
+            if (in_array($normalized, ['1', 'true', 'on', 'yes'], true)) {
+               return true;
+            }
+            if (in_array($normalized, ['0', 'false', 'off', 'no', ''], true)) {
+               return false;
+            }
+            return ((float)$value != 0.0);
          case 'float':
             return floatval($value);
          case 'int':
@@ -1526,11 +1540,15 @@ class yandexhome extends module
             }
 
             if (!isset($trait['value_map_preset'])) {
-               $trait['value_map_preset'] = 'none';
+               $trait['value_map_preset'] = ($normalized_type === 'on') ? 'bool_onoff_10' : 'none';
                $changed = true;
             }
             if (!isset($trait['value_map']) || !is_array($trait['value_map'])) {
-               $trait['value_map'] = [];
+               if ($normalized_type === 'on') {
+                  $trait['value_map'] = ['1' => 'on', '0' => 'off', 'true' => 'on', 'false' => 'off'];
+               } else {
+                  $trait['value_map'] = [];
+               }
                $changed = true;
             }
 
