@@ -352,6 +352,7 @@ class yandexhome extends module
          }
 
          if ($ok) {
+            $this->sendDiscoveryCallback();
             $this->redirect('?');
          }
       }
@@ -477,6 +478,8 @@ class yandexhome extends module
             if ($rec['ID']) {
                // Собираем JSON-конфиг устройства согласно актуальному формату API Yandex Home.
                $rec['CONFIG'] = $this->buildDeviceConfig($rec, $new_dev_traits, $devices_instance);
+               $config_check = json_decode($rec['CONFIG'], true);
+               $this->WriteLog('Device saved: ID=' . $rec['ID'] . '; TITLE=' . $rec['TITLE'] . '; TYPE=' . $rec['TYPE'] . '; CONFIG.type=' . (is_array($config_check) && isset($config_check['type']) ? $config_check['type'] : ''));
 
                // Обрабатываем набор метрик и привязанные к ним объекты и свойства.
                if (is_array($new_dev_traits)) {
@@ -542,6 +545,7 @@ class yandexhome extends module
                }
                // Обновляем запись об устройстве в БД.
                SQLUpdate('yandexhome_devices', $rec);
+               $this->sendDiscoveryCallback();
             }
             $out['OK'] = 1;
          } else {
@@ -561,6 +565,7 @@ class yandexhome extends module
       $this->DeleteLinkedProperties($id);
 
       SQLExec("DELETE FROM yandexhome_devices WHERE ID='{$id}'");
+      $this->sendDiscoveryCallback();
    }
 
    function getFakeTraitsForType($type)
@@ -627,6 +632,9 @@ class yandexhome extends module
          SQLUpdate('yandexhome_devices', $rec);
          $created++;
       }
+      if ($created > 0) {
+         $this->sendDiscoveryCallback();
+      }
       return $created;
    }
 
@@ -644,7 +652,51 @@ class yandexhome extends module
          SQLExec("DELETE FROM yandexhome_devices WHERE ID=" . (int)$row['ID']);
          $deleted++;
       }
+      if ($deleted > 0) {
+         $this->sendDiscoveryCallback();
+      }
       return $deleted;
+   }
+
+   function sendDiscoveryCallback()
+   {
+      $skill_id = $this->getReportableSkillId();
+      if (empty($this->config['SKILL_ACCESS_TOKEN']) || $skill_id == '') {
+         return false;
+      }
+
+      $payload = [
+         'ts' => microtime(true),
+         'payload' => [
+            'user_id' => md5($this->config['USER_NAME'])
+         ]
+      ];
+      $body = $this->encodeYandexJson($payload);
+      $url = "https://dialogs.yandex.net/api/v1/skills/" . urlencode($skill_id) . "/callback/discovery";
+
+      $crl = curl_init($url);
+      curl_setopt($crl, CURLOPT_URL, $url);
+      curl_setopt($crl, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($crl, CURLOPT_POST, 1);
+      curl_setopt($crl, CURLOPT_POSTFIELDS, $body);
+      curl_setopt($crl, CURLOPT_HTTPHEADER, [
+         'Content-type: application/json',
+         'Authorization: OAuth ' . $this->config['SKILL_ACCESS_TOKEN']
+      ]);
+
+      if (defined('USE_PROXY') && USE_PROXY != '') {
+         curl_setopt($crl, CURLOPT_PROXY, USE_PROXY);
+         if (defined('USE_PROXY_AUTH') && USE_PROXY_AUTH != '') {
+            curl_setopt($crl, CURLOPT_PROXYUSERPWD, USE_PROXY_AUTH);
+         }
+      }
+
+      $rest = curl_exec($crl);
+      $http_code = curl_getinfo($crl, CURLINFO_HTTP_CODE);
+      curl_close($crl);
+
+      $this->WriteLog("Discovery callback HTTP $http_code: " . $rest);
+      return ($http_code == 202);
    }
 
    /**
@@ -758,12 +810,25 @@ class yandexhome extends module
    {
       $this->WriteLog('Incoming sync request');
 
-      $res = SQLSelect("SELECT CONFIG FROM yandexhome_devices WHERE CONFIG!='' ORDER BY ID");
+      $res = SQLSelect("SELECT * FROM yandexhome_devices ORDER BY ID");
       $devices = [];
 
       foreach ($res as $device) {
-         $decoded = json_decode($device['CONFIG'], true);
+         $traits = json_decode(isset($device['TRAITS']) ? $device['TRAITS'] : '', true);
+         if (!is_array($traits)) {
+            $traits = [];
+         }
+         $rebuilt_config = $this->buildDeviceConfig($device, $traits, $this->devices_instance);
+         if ($rebuilt_config === '') {
+            continue;
+         }
+         if (!isset($device['CONFIG']) || $device['CONFIG'] !== $rebuilt_config) {
+            $device['CONFIG'] = $rebuilt_config;
+            SQLUpdate('yandexhome_devices', $device);
+         }
+         $decoded = json_decode($rebuilt_config, true);
          if ($this->isValidDiscoveryDevice($decoded)) {
+            $this->WriteLog('Sync device send: ID=' . (isset($device['ID']) ? $device['ID'] : '') . '; TITLE=' . (isset($device['TITLE']) ? $device['TITLE'] : '') . '; TYPE=' . (isset($decoded['type']) ? $decoded['type'] : ''));
             $devices[] = $decoded;
          }
       }
@@ -1256,6 +1321,13 @@ class yandexhome extends module
       $capabilities = [];
       $properties = [];
       $color_capability_index = null;
+      $raw_type = isset($rec['TYPE']) ? trim((string)$rec['TYPE']) : 'other';
+      if (strpos($raw_type, PREFIX_TYPES) === 0) {
+         $raw_type = substr($raw_type, strlen(PREFIX_TYPES));
+      }
+      if ($raw_type === '') {
+         $raw_type = 'other';
+      }
 
       if (!is_array($new_dev_traits)) {
          $new_dev_traits = [];
@@ -1339,7 +1411,7 @@ class yandexhome extends module
          'status_info' => [
             'reportable' => $this->hasReportableState($new_dev_traits)
          ],
-         'type' => PREFIX_TYPES . (isset($rec['TYPE']) ? $rec['TYPE'] : 'other'),
+         'type' => PREFIX_TYPES . $raw_type,
          'device_info' => [
             'manufacturer' => isset($rec['MANUFACTURER']) && $rec['MANUFACTURER'] != '' ? $rec['MANUFACTURER'] : 'MajorDoMo',
             'model' => $model,
