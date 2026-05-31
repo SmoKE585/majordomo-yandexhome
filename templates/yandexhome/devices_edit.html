@@ -137,6 +137,7 @@
 
 <div>
    <pre id="objects_json" style="display:none;">[#OBJECTS#]</pre>
+   <pre id="value_map_presets_json" style="display:none;">[#VALUE_MAP_PRESETS_JSON#]</pre>
    <!--# <pre>[#CONFIG#]</pre> #-->
    <!--# <pre>[#TRAITS#]</pre> #-->
 </div>
@@ -160,18 +161,36 @@ var traits_list = {};
 var objects_list = [];
 var objects_options = '';
 var instance_list = {};
+var value_map_presets = {};
 
 var isPopover = false;
+
+function asBool(value) {
+   if (typeof value === 'boolean') return value;
+   if (typeof value === 'number') return value !== 0;
+   if (typeof value === 'string') {
+      let v = value.toLowerCase().trim();
+      return (v === '1' || v === 'true' || v === 'yes' || v === 'on');
+   }
+   return !!value;
+}
 
 // Получаем список метрик в формате JSON.
 var traits_json = '[#TRAITS#]';
 
 // Получаем список метрик в формате JSON.
 var objects_json = $('#objects_json').text();
+var value_map_presets_json = $('#value_map_presets_json').text();
 
 // Получаем массив поддерживаемых умений.
 var instance_list = tryParseJSON('[#DEVICES_INSTANCE_JSON#]');
 saveInstanceList();
+if (value_map_presets_json !== '') {
+   let parsed_presets = tryParseJSON(value_map_presets_json);
+   if (parsed_presets !== false) {
+      value_map_presets = parsed_presets;
+   }
+}
 
 // Получаем конфиг устройства в формате JSON.
 var dev_config = tryParseJSON('[#CONFIG#]');
@@ -200,6 +219,16 @@ script.onload = function() {
       var traits = tryParseJSON(traits_json);
       if (traits !== false) {
          traits_list = traits;
+        for (const traitKey in traits_list) {
+            if (!traits_list.hasOwnProperty(traitKey)) continue;
+            if (typeof(traits_list[traitKey].value_map_preset) === 'undefined') {
+               traits_list[traitKey].value_map_preset = 'none';
+            }
+            if (typeof(traits_list[traitKey].value_map) === 'undefined' || traits_list[traitKey].value_map === null) {
+               traits_list[traitKey].value_map = {};
+            }
+            traits_list[traitKey].reportable = asBool(traits_list[traitKey].reportable);
+         }
          refreshTraitsSelectDisabled();
          // Формируем и выводим таблицу метрик.
          renderTraitsTable();
@@ -249,25 +278,29 @@ script.onload = function() {
 //London тоже руку приложил, тож нихера не понял
 
 function addReportable(prop_name,split = false) {
-   traits = tryParseJSON($('#traits_json').val());
-   if (prop_name == 'on') {
-      instance = tryParseJSON($('#instance_json').val());
+   let traits = traits_list;
+   if (typeof(traits[prop_name]) === 'undefined') {
+      return;
    }
+   let instance = instance_list;
    if (!split) {
-      traits[prop_name]['reportable'] = !traits[prop_name]['reportable'];
-      if (prop_name == 'on' && traits[prop_name]['reportable'] && instance[prop_name]['parameters']['split']) {
+      traits[prop_name]['reportable'] = !asBool(traits[prop_name]['reportable']);
+      if (prop_name == 'on' && traits[prop_name]['reportable'] && instance[prop_name] && instance[prop_name]['parameters'] && instance[prop_name]['parameters']['split']) {
          instance[prop_name]['parameters']['split'] = false;
       }
    } else if (prop_name == 'on') {
-      instance[prop_name]['parameters']['split'] = !instance[prop_name]['parameters']['split'];
-      if (instance[prop_name]['parameters']['split'] && traits[prop_name]['reportable']) {
+      if (!instance[prop_name] || !instance[prop_name]['parameters']) {
+         return;
+      }
+      instance[prop_name]['parameters']['split'] = !asBool(instance[prop_name]['parameters']['split']);
+      if (instance[prop_name]['parameters']['split'] && asBool(traits[prop_name]['reportable'])) {
          traits[prop_name]['reportable'] = false;
       }
    }
-   $('#traits_json').val(JSON.stringify(traits));
-   if (prop_name == 'on') {
-      $('#instance_json').val(JSON.stringify(instance));
-   }
+   traits_list = traits;
+   instance_list = instance;
+   saveTraitsList();
+   saveInstanceList();
    renderTraitsTable();
 }
 
@@ -280,7 +313,7 @@ function renderTraitsTable() {
          let linked_object = traits_list[key].linked_object;
          let linked_property = traits_list[key].linked_property;
          let linked_description = traits_list[key].description;
-         let reportable = traits_list[key].reportable;
+         let reportable = asBool(traits_list[key].reportable);
          let split = false;
          if (key == 'on') {
            let capabilities = (dev_config && dev_config.capabilities) ? dev_config.capabilities : [];
@@ -377,6 +410,157 @@ function getTraitTypeOptionsHtml(current_type) {
    return html;
 }
 
+function getValueMapPresetOptionsHtml(current_preset) {
+   let html = '';
+   for (const preset_id in value_map_presets) {
+      if (!value_map_presets.hasOwnProperty(preset_id)) continue;
+      let label = value_map_presets[preset_id].label || preset_id;
+      let selected = (preset_id === current_preset) ? ' selected' : '';
+      html += '<option value="' + preset_id + '"' + selected + '>' + label + '</option>';
+   }
+   return html;
+}
+
+function getAllowedYandexValues(trait_type) {
+   let def = instance_list[trait_type];
+   if (def && typeof(def) === 'object') {
+      if (def.capability === 'mode' && def.parameters && Array.isArray(def.parameters.modes)) {
+         let modeValues = [];
+         for (let i = 0; i < def.parameters.modes.length; i++) {
+            let item = def.parameters.modes[i];
+            if (item && typeof(item.value) !== 'undefined') {
+               modeValues.push(String(item.value));
+            }
+         }
+         if (modeValues.length > 0) return modeValues;
+      }
+
+      if (def.capability === 'event' && def.parameters && Array.isArray(def.parameters.events)) {
+         let eventValues = [];
+         for (let i = 0; i < def.parameters.events.length; i++) {
+            let item = def.parameters.events[i];
+            if (item && typeof(item.value) !== 'undefined') {
+               eventValues.push(String(item.value));
+            }
+         }
+         if (eventValues.length > 0) return eventValues;
+      }
+
+      if (def.capability === 'toggle' || def.capability === 'on_off') {
+         return ['true', 'false', 'on', 'off', '1', '0'];
+      }
+   }
+
+   // Fallback for traits without explicit enum list in structure.
+   return ['opened', 'closed', 'detected', 'not_detected', 'leak', 'dry', 'click', 'double_click', 'long_press', 'low', 'normal', 'empty', 'on', 'off', 'true', 'false'];
+}
+
+function getYandexValueOptionsHtml(trait_type, selected_value) {
+   let values = getAllowedYandexValues(trait_type);
+   let html = '<option value=""></option>';
+   for (let i = 0; i < values.length; i++) {
+      let val = values[i];
+      let selected = (val === selected_value) ? ' selected' : '';
+      html += '<option value="' + val + '"' + selected + '>' + val + '</option>';
+   }
+   return html;
+}
+
+function renderValueMapEditor(trait_type) {
+   let container = $('#value_map_editor_' + trait_type);
+   container.empty();
+   if (typeof(traits_list[trait_type]) === 'undefined') return;
+   let editorField = container.closest('.yh-trait-map-editor-field');
+   if (traits_list[trait_type].value_map_preset !== 'custom') {
+      editorField.hide();
+      return;
+   }
+   editorField.show();
+
+   if (!traits_list[trait_type].value_map || typeof(traits_list[trait_type].value_map) !== 'object') {
+      traits_list[trait_type].value_map = {};
+   }
+
+   let map = traits_list[trait_type].value_map;
+   let keys = Object.keys(map);
+
+   let header = $('<div class="yh-map-header"><div>MJDM</div><div>Yandex</div><div></div></div>');
+   container.append(header);
+
+   for (let i = 0; i < keys.length; i++) {
+      let src = keys[i];
+      let dst = map[src];
+      let row = $('<div class="yh-map-row"></div>');
+      row.append('<input type="text" class="form-control input-sm yh-map-src" value="' + escapeHtml(src) + '" data-old-key="' + escapeHtml(src) + '">');
+      row.append('<select class="selectpicker yh-map-dst" data-width="100%">' + getYandexValueOptionsHtml(trait_type, dst) + '</select>');
+      row.append('<button type="button" class="btn btn-xs btn-default yh-map-del"><i class="glyphicon glyphicon-trash"></i></button>');
+      container.append(row);
+   }
+
+   let addBtn = $('<button type="button" class="btn btn-xs btn-default yh-map-add"><i class="glyphicon glyphicon-plus"></i>&nbsp;Добавить соответствие</button>');
+   container.append(addBtn);
+   container.find('.selectpicker').selectpicker('render').selectpicker('refresh');
+
+   container.find('.yh-map-add').off('click').on('click', function() {
+      let row = $('<div class="yh-map-row"></div>');
+      row.append('<input type="text" class="form-control input-sm yh-map-src" value="" data-old-key="">');
+      row.append('<select class="selectpicker yh-map-dst" data-width="100%">' + getYandexValueOptionsHtml(trait_type, '') + '</select>');
+      row.append('<button type="button" class="btn btn-xs btn-default yh-map-del"><i class="glyphicon glyphicon-trash"></i></button>');
+      $(this).before(row);
+      row.find('.selectpicker').selectpicker('render').selectpicker('refresh');
+   });
+
+   container.off('click', '.yh-map-del').on('click', '.yh-map-del', function() {
+      $(this).closest('.yh-map-row').remove();
+      collectValueMapFromEditor(trait_type);
+   });
+
+   container.off('change', '.yh-map-dst').on('change', '.yh-map-dst', function() {
+      collectValueMapFromEditor(trait_type);
+   });
+
+   container.off('change', '.yh-map-src').on('change', '.yh-map-src', function() {
+      collectValueMapFromEditor(trait_type);
+   });
+}
+
+function collectValueMapFromEditor(trait_type) {
+   let container = $('#value_map_editor_' + trait_type);
+   if (typeof(traits_list[trait_type]) === 'undefined') return;
+   let map = {};
+   container.find('.yh-map-row').each(function() {
+      let src = ($(this).find('.yh-map-src').val() || '').toString().trim().toLowerCase();
+      let dst = ($(this).find('.yh-map-dst').val() || '').toString().trim();
+      if (src !== '' && dst !== '') {
+         map[src] = dst;
+      }
+   });
+   traits_list[trait_type].value_map = map;
+   saveTraitsList();
+}
+
+function changeTraitValueMapPreset(trait_type, preset_id) {
+   if (typeof(traits_list[trait_type]) === 'undefined') {
+      return;
+   }
+   if (typeof(value_map_presets[preset_id]) === 'undefined') {
+      preset_id = 'none';
+   }
+
+   traits_list[trait_type].value_map_preset = preset_id;
+   if (preset_id !== 'custom') {
+      let preset_map = value_map_presets[preset_id] && value_map_presets[preset_id].map ? value_map_presets[preset_id].map : {};
+      let normalized_map = {};
+      for (const src in preset_map) {
+         if (!preset_map.hasOwnProperty(src)) continue;
+         normalized_map[String(src).toLowerCase()] = preset_map[src];
+      }
+      traits_list[trait_type].value_map = normalized_map;
+   }
+   saveTraitsList();
+   renderValueMapEditor(trait_type);
+}
+
 function changeTraitType(old_type, new_type) {
    if (!new_type || old_type === new_type) {
       return;
@@ -417,6 +601,8 @@ function addTraitRow(linked_type, linked_description, linked_object, linked_prop
    }
 
    let trait_type_options = getTraitTypeOptionsHtml(linked_type);
+   let current_map_preset = (traits_list[linked_type] && traits_list[linked_type].value_map_preset) ? traits_list[linked_type].value_map_preset : 'none';
+   let map_preset_options = getValueMapPresetOptionsHtml(current_map_preset);
 
    card.append($(`
       <div class="yh-trait-card-head">
@@ -449,6 +635,13 @@ function addTraitRow(linked_type, linked_description, linked_object, linked_prop
 
    renderPropertySelectbox('linked_property' + linked_type, linked_object, linked_property);
 
+   let mapPresetField = $('<div class="yh-trait-field yh-trait-map-field"></div>')
+      .append('<div class="yh-trait-label">Соответствия MJDM -> Yandex</div>')
+      .append($('<select id="value_map_preset_' + linked_type + '" class="selectpicker" data-width="100%" onchange="changeTraitValueMapPreset(\'' + linked_type + '\', this.value);">' + map_preset_options + '</select>'));
+   grid.append(mapPresetField);
+   let mapEditorField = $('<div class="yh-trait-field yh-trait-map-editor-field"><div id="value_map_editor_' + linked_type + '" class="yh-map-editor"></div></div>');
+   grid.append(mapEditorField);
+
    let reportable_btn_class = reportable ? 'btn-success' : 'btn-default';
    let reportable_btn_text = reportable ? 'Репорт: Вкл' : 'Репорт: Выкл';
 
@@ -470,6 +663,9 @@ function addTraitRow(linked_type, linked_description, linked_object, linked_prop
 
    $('#trait_type_select_' + linked_type).selectpicker('render');
    $('#trait_type_select_' + linked_type).selectpicker('refresh');
+   $('#value_map_preset_' + linked_type).selectpicker('render');
+   $('#value_map_preset_' + linked_type).selectpicker('refresh');
+   renderValueMapEditor(linked_type);
 }
 
 function addTrait() {
@@ -485,6 +681,8 @@ function addTrait() {
       traits_list[trait_type].linked_object = '';
       traits_list[trait_type].linked_property = '';
       traits_list[trait_type].reportable = false;
+      traits_list[trait_type].value_map_preset = 'none';
+      traits_list[trait_type].value_map = {};
       saveTraitsList();
 
       isPopover = false;
@@ -711,7 +909,7 @@ function escapeHtml(string) {
 
 .yh-trait-grid {
    display: grid;
-   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 150px;
+   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(220px, 1fr) 170px;
    gap: 10px;
    align-items: end;
    width: 100%;
@@ -748,9 +946,49 @@ function escapeHtml(string) {
    margin-right: 0;
 }
 
+.yh-trait-map-editor-field {
+   grid-column: 1 / -1;
+}
+
+.yh-trait-map-field {
+   grid-column: 1 / -1;
+}
+
+.yh-map-editor {
+   border: 1px solid #e5e9ef;
+   border-radius: 6px;
+   padding: 8px;
+   background: #fafbfd;
+}
+
+.yh-map-header {
+   display: grid;
+   grid-template-columns: 1fr 1fr 36px;
+   gap: 8px;
+   font-size: 11px;
+   color: #7c8795;
+   margin-bottom: 6px;
+}
+
+.yh-map-row {
+   display: grid;
+   grid-template-columns: 1fr 1fr 36px;
+   gap: 8px;
+   margin-bottom: 6px;
+}
+
+.yh-map-add {
+   margin-top: 2px;
+}
+
 @media (max-width: 1200px) {
    .yh-trait-grid {
       grid-template-columns: 1fr 1fr;
+   }
+
+   .yh-trait-map-field,
+   .yh-trait-map-editor-field {
+      grid-column: 1 / -1;
    }
 
    .yh-trait-actions {
@@ -765,6 +1003,11 @@ function escapeHtml(string) {
 
 @media (max-width: 768px) {
    .yh-trait-grid {
+      grid-template-columns: 1fr;
+   }
+
+   .yh-map-header,
+   .yh-map-row {
       grid-template-columns: 1fr;
    }
 }

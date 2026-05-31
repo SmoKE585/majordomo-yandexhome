@@ -489,3 +489,38 @@ $this->legacy_instance_aliases = [
    'pm2.5_density_sensor' => 'pm2_5_density_sensor',
    'pm2_5_density_sensor' => 'pm2_5_density_sensor',
 ];
+
+$this->value_map_presets = [
+   'none' => [
+      'label' => 'Без преобразования',
+      'map' => []
+   ],
+   'custom' => [
+      'label' => 'Пользовательский',
+      'map' => []
+   ],
+   'bool_onoff_10' => [
+      'label' => '1/0 -> on/off',
+      'map' => ['1' => 'on', '0' => 'off', 'true' => 'on', 'false' => 'off']
+   ],
+   'bool_open_closed_10' => [
+      'label' => '1/0 -> opened/closed',
+      'map' => ['1' => 'opened', '0' => 'closed', 'true' => 'opened', 'false' => 'closed']
+   ],
+   'bool_detected_10' => [
+      'label' => '1/0 -> detected/not_detected',
+      'map' => ['1' => 'detected', '0' => 'not_detected', 'true' => 'detected', 'false' => 'not_detected']
+   ],
+   'bool_leak_10' => [
+      'label' => '1/0 -> leak/dry',
+      'map' => ['1' => 'leak', '0' => 'dry', 'true' => 'leak', 'false' => 'dry']
+   ],
+   'level_012_food_water' => [
+      'label' => '0/1/2 -> empty/low/normal',
+      'map' => ['0' => 'empty', '1' => 'low', '2' => 'normal']
+   ],
+   'button_123' => [
+      'label' => '1/2/3 -> click/double_click/long_press',
+      'map' => ['1' => 'click', '2' => 'double_click', '3' => 'long_press']
+   ]
+];

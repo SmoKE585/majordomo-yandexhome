@@ -375,6 +375,7 @@ class yandexhome extends module
       // Поддерживаемые метрики (возможности) устройств.
       $out['DEVICES_INSTANCE'] = array_values($this->devices_instance);
       $out['DEVICES_INSTANCE_JSON'] = json_encode($this->devices_instance, JSON_UNESCAPED_UNICODE);
+      $out['VALUE_MAP_PRESETS_JSON'] = json_encode($this->value_map_presets, JSON_UNESCAPED_UNICODE);
 
       // Список местоположений (комнат) в системе.
       $out['LOCATIONS'] = SQLSelect('SELECT ID, TITLE FROM locations ORDER BY TITLE');
@@ -467,6 +468,12 @@ class yandexhome extends module
                   if ($instance_def && isset($instance_def['description'])) {
                      $trait_data['description'] = $instance_def['description'];
                   }
+               }
+               if (!isset($trait_data['value_map_preset'])) {
+                  $trait_data['value_map_preset'] = 'none';
+               }
+               if (!isset($trait_data['value_map']) || !is_array($trait_data['value_map'])) {
+                  $trait_data['value_map'] = [];
                }
                $normalized_traits[$trait_type] = $trait_data;
             }
@@ -708,8 +715,15 @@ class yandexhome extends module
    function PropertySetHandle($object, $property, $value)
    {
       $this->WriteLog("PropertySetHandle for object '$object' and property '$property' and value=$value");
+      $is_domofon_now_calling = ($object === 'Domofon' && $property === 'nowCalling');
+      if ($is_domofon_now_calling) {
+         $this->WriteLog("DOMOFON DEBUG trigger: object='$object'; property='$property'; value=" . json_encode($value));
+      }
       $skill_id = $this->getReportableSkillId();
       if (empty($this->config['SKILL_ACCESS_TOKEN']) || $skill_id == '') {
+         if ($is_domofon_now_calling) {
+            $this->WriteLog("DOMOFON DEBUG skip: callback credentials are not configured");
+         }
          return;
       }
 
@@ -773,6 +787,9 @@ class yandexhome extends module
 
             $body = $this->encodeYandexJson($send);
             $this->WriteLog("PropertySetHandle send: " . $body);
+            if ($is_domofon_now_calling) {
+               $this->WriteLog("DOMOFON DEBUG payload: " . $body);
+            }
             $url = "https://dialogs.yandex.net/api/v1/skills/" . urlencode($skill_id) . "/callback/state";
             $crl = curl_init($url);
             curl_setopt($crl, CURLOPT_URL, $url);
@@ -797,6 +814,9 @@ class yandexhome extends module
             $http_code = curl_getinfo($crl, CURLINFO_HTTP_CODE);
             curl_close($crl);
             $this->WriteLog("PropertySetHandle send result HTTP $http_code: " . $rest);
+            if ($is_domofon_now_calling) {
+               $this->WriteLog("DOMOFON DEBUG result: HTTP $http_code; body=" . $rest);
+            }
          }
       }
    }
@@ -1126,7 +1146,13 @@ class yandexhome extends module
    function normalizeEventValueForState($trait_type, $value, $trait = [])
    {
       if (is_string($value) && $value !== '') {
-         return $value;
+         $known_values = [
+            'opened', 'closed', 'detected', 'not_detected', 'click', 'double_click', 'long_press',
+            'leak', 'dry', 'high', 'low', 'normal', 'empty'
+         ];
+         if (in_array($value, $known_values, true)) {
+            return $value;
+         }
       }
 
       switch ($trait_type) {
@@ -1157,12 +1183,26 @@ class yandexhome extends module
             }
             return $value ? 'low' : 'normal';
          default:
+            $normalized = strtolower((string)$value);
+            if ($normalized === '1' || $normalized === 'true' || $normalized === 'on') {
+               return 'detected';
+            }
+            if ($normalized === '0' || $normalized === 'false' || $normalized === 'off') {
+               return 'not_detected';
+            }
             return $value;
       }
    }
 
    function normalizeValueForState($trait_type, $instance_def, $value, $trait = [])
    {
+      if (isset($trait['value_map']) && is_array($trait['value_map']) && !empty($trait['value_map'])) {
+         $map_key = strtolower(trim((string)$value));
+         if (isset($trait['value_map'][$map_key])) {
+            $value = $trait['value_map'][$map_key];
+         }
+      }
+
       $value_type = isset($instance_def['value_type']) ? $instance_def['value_type'] : 'string';
 
       switch ($value_type) {
@@ -1483,6 +1523,15 @@ class yandexhome extends module
                   $trait['description'] = $instance_def['description'];
                   $changed = true;
                }
+            }
+
+            if (!isset($trait['value_map_preset'])) {
+               $trait['value_map_preset'] = 'none';
+               $changed = true;
+            }
+            if (!isset($trait['value_map']) || !is_array($trait['value_map'])) {
+               $trait['value_map'] = [];
+               $changed = true;
             }
 
             $normalized_traits[$normalized_type] = $trait;
