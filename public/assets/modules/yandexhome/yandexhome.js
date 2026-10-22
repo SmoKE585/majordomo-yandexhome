@@ -80,6 +80,7 @@
         new window.TomSelect(select, {
             allowEmptyOption: true,
             create: false,
+            dropdownParent: 'body',
             maxItems: 1,
             maxOptions: 500,
             plugins: [],
@@ -111,8 +112,7 @@
         this.data = {};
         this.traits = {};
         this.instanceConfig = {};
-        this.propertyCache = {};
-        this.propertyRequests = {};
+        this.linkSeq = 0;
         this.ready = false;
     }
 
@@ -137,7 +137,6 @@
         this.form.addEventListener('change', this.onChange.bind(this));
         this.form.addEventListener('input', this.onInput.bind(this));
         this.form.addEventListener('submit', this.onSubmit.bind(this));
-        this.form.addEventListener('yh:request-properties', this.onRequestProperties.bind(this));
 
         this.render();
         this.bindPicker();
@@ -237,6 +236,7 @@
     };
 
     TraitEditor.prototype.syncHidden = function () {
+        this.collectLinkedValues();
         var traitsInput = this.form.querySelector('[data-yh-traits-json]');
         var instanceInput = this.form.querySelector('[data-yh-instance-json]');
         if (traitsInput) {
@@ -245,6 +245,28 @@
         if (instanceInput) {
             instanceInput.value = JSON.stringify(this.instanceConfig);
         }
+    };
+
+    /*
+     * linkedobject writes selected values into the native inputs; collect them
+     * before serialising so free-form values are not lost between renders.
+     */
+    TraitEditor.prototype.collectLinkedValues = function () {
+        if (!this.container) {
+            return;
+        }
+        this.container.querySelectorAll('[data-yh-linked-object]').forEach(function (input) {
+            var type = input.getAttribute('data-yh-linked-object');
+            if (this.traits[type]) {
+                this.traits[type].linked_object = String(input.value || '');
+            }
+        }, this);
+        this.container.querySelectorAll('[data-yh-linked-property]').forEach(function (input) {
+            var type = input.getAttribute('data-yh-linked-property');
+            if (this.traits[type]) {
+                this.traits[type].linked_property = String(input.value || '');
+            }
+        }, this);
     };
 
     TraitEditor.prototype.instanceSettings = function (type) {
@@ -297,41 +319,75 @@
         return html;
     };
 
-    TraitEditor.prototype.objectOptions = function (selected) {
-        var objects = this.data.objects || [];
-        var found = false;
-        var html = '<option value="">Не привязан</option>';
-        objects.forEach(function (object) {
-            var title = object.title || '';
-            if (title === selected) {
-                found = true;
-            }
-            html += '<option value="' + escapeHtml(title) + '"' + (title === selected ? ' selected' : '') + '>'
-                + escapeHtml(title) + (object.description ? ' — ' + escapeHtml(object.description) : '') + '</option>';
-        });
-        if (selected && !found) {
-            html += '<option value="' + escapeHtml(selected) + '" selected>' + escapeHtml(selected) + ' (нет в объектах)</option>';
+    /*
+     * Standard linkedobject control from the UI Kit.
+     *
+     * The canonical markup is rendered server-side by
+     * [#module name="linkedobject"#] into an inert <template>; this method
+     * clones it, makes IDs unique and fills the native inputs. The component
+     * itself is initialised afterwards through MDLinkedObjectUI.init().
+     */
+    TraitEditor.prototype.linkedObjectHtml = function (type, objectValue, propertyValue) {
+        var prototype = document.getElementById('yh-linkedobject-prototype');
+        if (!prototype) {
+            return '';
         }
-        return html;
-    };
 
-    TraitEditor.prototype.propertyOptions = function (type, selected) {
-        var trait = this.traits[type];
-        var cache = trait && this.propertyCache[trait.linked_object] ? this.propertyCache[trait.linked_object] : [];
-        var found = false;
-        var html = '<option value="">Не привязано</option>';
-        cache.forEach(function (property) {
-            var title = property.TITLE || '';
-            if (title === selected) {
-                found = true;
-            }
-            html += '<option value="' + escapeHtml(title) + '"' + (title === selected ? ' selected' : '') + '>'
-                + escapeHtml(title) + (property.DESCRIPTION ? ' — ' + escapeHtml(property.DESCRIPTION) : '') + '</option>';
-        });
-        if (selected && !found) {
-            html += '<option value="' + escapeHtml(selected) + '" selected>' + escapeHtml(selected) + ' (не загружено)</option>';
+        var uid = 't' + (++this.linkSeq) + '-' + safeId(type);
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = prototype.innerHTML.replace(/__uid__/g, uid);
+
+        // The module include generates its own random `uniq`; make every
+        // cloned instance unique so IDs and hint references cannot collide.
+        var uniqNode = wrapper.querySelector('[data-md-linkedobject-uniq]');
+        var prototypeUniq = uniqNode ? uniqNode.getAttribute('data-md-linkedobject-uniq') : '';
+        if (prototypeUniq) {
+            wrapper.querySelectorAll('[data-md-linkedobject-uniq]').forEach(function (node) {
+                node.setAttribute('data-md-linkedobject-uniq', uid);
+            });
+            wrapper.querySelectorAll('[id]').forEach(function (node) {
+                node.id = node.id.split(prototypeUniq).join(uid);
+            });
+            wrapper.querySelectorAll('[for]').forEach(function (node) {
+                node.setAttribute('for', String(node.getAttribute('for') || '').split(prototypeUniq).join(uid));
+            });
+            wrapper.querySelectorAll('[aria-describedby]').forEach(function (node) {
+                node.setAttribute(
+                    'aria-describedby',
+                    String(node.getAttribute('aria-describedby') || '').split(prototypeUniq).join(uid)
+                );
+            });
         }
-        return html;
+
+        // The object list is shared by the component and fetched by AJAX; do
+        // not duplicate the embedded JSON in every trait card.
+        wrapper.querySelectorAll('script[data-md-linkedobject-data]').forEach(function (node) {
+            node.remove();
+        });
+
+        var objectInput = wrapper.querySelector('#yh-linked-object-' + uid);
+        var propertyInput = wrapper.querySelector('#yh-linked-property-' + uid);
+        if (!objectInput || !propertyInput) {
+            return '';
+        }
+
+        objectInput.setAttribute('data-yh-linked-object', type);
+        objectInput.setAttribute('value', objectValue || '');
+        objectInput.value = objectValue || '';
+        propertyInput.setAttribute('data-yh-linked-property', type);
+        propertyInput.setAttribute('value', propertyValue || '');
+        propertyInput.value = propertyValue || '';
+
+        var objectRoot = wrapper.querySelector('[data-md-linkedobject-role="object"]');
+        var propertyRoot = wrapper.querySelector('[data-md-linkedobject-role="property"]');
+        if (objectRoot) {
+            objectRoot.setAttribute('data-md-linkedobject-value', objectValue || '');
+        }
+        if (propertyRoot) {
+            propertyRoot.setAttribute('data-md-linkedobject-value', propertyValue || '');
+        }
+
+        return wrapper.innerHTML;
     };
 
     TraitEditor.prototype.mapValues = function (type, selected) {
@@ -423,14 +479,15 @@
             + '<button type="button" class="md-icon-btn md-icon-btn--sm md-icon-btn--danger" data-yh-remove="' + escapeHtml(type) + '" aria-label="Удалить умение" data-bs-toggle="tooltip" data-bs-title="Удалить умение"><i class="ti ti-trash" aria-hidden="true"></i></button>'
             + '</header>'
             + '<div class="md-yh-trait__body">'
-            + '<div class="md-yh-trait__row">'
+            + '<div class="md-yh-trait__row md-yh-trait__row--top">'
             + '<div class="md-field"><label class="md-field__label" for="yh-type-' + uid + '">Тип умения</label><div class="md-field__control"><select class="md-select" id="yh-type-' + uid + '" data-yh-trait-type="' + escapeHtml(type) + '">' + this.typeOptions(type) + '</select></div></div>'
-            + '<div class="md-field"><label class="md-field__label" for="yh-object-' + uid + '">Объект</label><div class="md-field__control"><select class="md-select" id="yh-object-' + uid + '" data-yh-trait-object="' + escapeHtml(type) + '">' + this.objectOptions(trait.linked_object || '') + '</select></div></div>'
-            + '<div class="md-field"><label class="md-field__label" for="yh-property-' + uid + '">Свойство</label><div class="md-field__control"><select class="md-select" id="yh-property-' + uid + '" data-yh-trait-property="' + escapeHtml(type) + '">' + this.propertyOptions(type, trait.linked_property || '') + '</select></div></div>'
+            + '<div class="md-field"><label class="md-field__label" for="yh-preset-' + uid + '">Соответствие значений</label><div class="md-field__control"><select class="md-select" id="yh-preset-' + uid + '" data-yh-map-preset="' + escapeHtml(type) + '">' + this.presetOptions(trait.value_map_preset || 'none') + '</select></div><div class="md-field__hint">' + escapeHtml(presetLabel) + '</div></div>'
+            + '</div>'
+            + '<div class="md-yh-trait__links">'
+            + this.linkedObjectHtml(type, trait.linked_object || '', trait.linked_property || '')
             + '</div>'
             + rangeHtml
-            + '<div class="md-yh-trait__row md-yh-trait__row--mapping">'
-            + '<div class="md-field"><label class="md-field__label" for="yh-preset-' + uid + '">Соответствие значений</label><div class="md-field__control"><select class="md-select" id="yh-preset-' + uid + '" data-yh-map-preset="' + escapeHtml(type) + '">' + this.presetOptions(trait.value_map_preset || 'none') + '</select></div><div class="md-field__hint">' + escapeHtml(presetLabel) + '</div></div>'
+            + '<div class="md-yh-trait__row md-yh-trait__row--switches">'
             + '<div class="md-yh-trait__switches">' + reportableHtml + splitHtml + '</div>'
             + '</div>'
             + mapEditor
@@ -458,81 +515,14 @@
             initTomSelect(select, !isType);
         }, this);
 
-        Object.keys(this.traits).forEach(function (type) {
-            var trait = this.traits[type];
-            if (trait.linked_object && !this.propertyCache[trait.linked_object]) {
-                this.loadProperties(type);
-            }
-        }, this);
+        if (window.MDLinkedObjectUI && typeof window.MDLinkedObjectUI.init === 'function') {
+            window.MDLinkedObjectUI.init(this.container);
+        }
 
         this.syncHidden();
         if (window.MDJAdminUI && typeof window.MDJAdminUI.initBootstrapWidgets === 'function') {
             window.MDJAdminUI.initBootstrapWidgets(this.container);
         }
-    };
-
-    TraitEditor.prototype.loadProperties = function (type) {
-        var trait = this.traits[type];
-        if (!trait || !trait.linked_object) {
-            return;
-        }
-        var object = trait.linked_object;
-        if (this.propertyCache[object]) {
-            this.refreshPropertySelect(type);
-            return;
-        }
-        if (this.propertyRequests[object]) {
-            this.propertyRequests[object].then(function () {
-                this.refreshPropertySelect(type);
-            }.bind(this));
-            return;
-        }
-
-        var url = (this.data.propertyUrl || '') + '&object=' + encodeURIComponent(object);
-        var editor = this;
-        this.propertyRequests[object] = window.fetch(url, {
-            credentials: 'same-origin',
-            headers: {'Accept': 'application/json'}
-        }).then(function (response) {
-            return response.json();
-        }).then(function (payload) {
-            editor.propertyCache[object] = payload && Array.isArray(payload.PROPERTIES) ? payload.PROPERTIES : [];
-            delete editor.propertyRequests[object];
-            Object.keys(editor.traits).forEach(function (traitType) {
-                if (editor.traits[traitType].linked_object === object) {
-                    editor.refreshPropertySelect(traitType);
-                }
-            });
-        }).catch(function () {
-            delete editor.propertyRequests[object];
-            showMessage(editor.form, 'Не удалось загрузить свойства объекта «' + object + '».', 'error');
-        });
-    };
-
-    TraitEditor.prototype.refreshPropertySelect = function (type) {
-        var trait = this.traits[type];
-        if (!trait) {
-            return;
-        }
-        var select = this.container.querySelector('[data-yh-trait-property="' + CSS.escape(type) + '"]');
-        if (!select) {
-            return;
-        }
-        var selected = trait.linked_property || '';
-        var available = (this.propertyCache[trait.linked_object] || []).map(function (property) {
-            return property.TITLE || '';
-        });
-        if (selected && available.indexOf(selected) === -1) {
-            trait.linked_property = '';
-            selected = '';
-        }
-        if (select.tomselect) {
-            select.tomselect.destroy();
-        }
-        delete select.dataset.mdSearchableReady;
-        select.innerHTML = this.propertyOptions(type, selected);
-        initTomSelect(select, true);
-        this.syncHidden();
     };
 
     TraitEditor.prototype.onClick = function (event) {
@@ -583,35 +573,20 @@
             return;
         }
 
-        if (target.hasAttribute('data-yh-trait-object')) {
-            var objectType = target.getAttribute('data-yh-trait-object');
-            var trait = this.traits[objectType];
-            if (trait) {
-                trait.linked_object = target.value;
-                trait.linked_property = '';
+        if (target.hasAttribute('data-yh-linked-object')) {
+            var objectType = target.getAttribute('data-yh-linked-object');
+            if (this.traits[objectType]) {
+                this.traits[objectType].linked_object = String(target.value || '');
                 this.syncHidden();
-                this.render();
             }
             return;
         }
 
-        if (target.hasAttribute('data-yh-trait-property')) {
-            var propertyType = target.getAttribute('data-yh-trait-property');
+        if (target.hasAttribute('data-yh-linked-property')) {
+            var propertyType = target.getAttribute('data-yh-linked-property');
             if (this.traits[propertyType]) {
-                this.traits[propertyType].linked_property = target.value;
-                if (target.value === '') {
-                    this.traits[propertyType].linked_object = '';
-                }
+                this.traits[propertyType].linked_property = String(target.value || '');
                 this.syncHidden();
-                if (target.value === '' && this.traits[propertyType]) {
-                    var objectSelect = this.container.querySelector('[data-yh-trait-object="' + CSS.escape(propertyType) + '"]');
-                    if (objectSelect) {
-                        objectSelect.value = '';
-                        if (objectSelect.tomselect) {
-                            objectSelect.tomselect.clear(true);
-                        }
-                    }
-                }
             }
             return;
         }
@@ -701,13 +676,6 @@
         });
         this.traits[type].value_map = map;
         this.syncHidden();
-    };
-
-    TraitEditor.prototype.onRequestProperties = function (event) {
-        if (!event.detail || !event.detail.type) {
-            return;
-        }
-        this.loadProperties(event.detail.type);
     };
 
     TraitEditor.prototype.onSubmit = function (event) {

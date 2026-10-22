@@ -169,6 +169,12 @@
                 <p class="md-empty__text">Выберите характеристику выше и нажмите «Добавить»: например, «Включить/выключить» или «Яркость».</p>
             </div>
 
+            <template id="yh-linkedobject-prototype">
+                <input type="text" id="yh-linked-object-__uid__" name="yh-linked-object-__uid__" autocomplete="off">
+                <input type="text" id="yh-linked-property-__uid__" name="yh-linked-property-__uid__" autocomplete="off">
+                [#module name="linkedobject" object_field="yh-linked-object-__uid__" property_field="yh-linked-property-__uid__" uniq="__uid__" width="100%"#]
+            </template>
+
             <script type="application/json" id="yh-editor-data">[#EDITOR_DATA_JSON#]</script>
         </div>
         <footer class="md-card__footer md-yh-form-actions">

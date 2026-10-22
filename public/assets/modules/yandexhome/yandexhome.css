@@ -219,7 +219,7 @@ body.md-admin-shell .md-yh-page .md-yh-traits-editor {
 }
 
 body.md-admin-shell .md-yh-page .md-yh-trait {
-  overflow: hidden;
+  overflow: visible;
   background: var(--md-ui-surface);
   border: 1px solid var(--md-ui-border);
   border-radius: var(--md-ui-radius-md);
@@ -233,6 +233,7 @@ body.md-admin-shell .md-yh-page .md-yh-trait__head {
   padding: 12px 14px;
   background: var(--md-ui-surface-2);
   border-bottom: 1px solid var(--md-ui-border);
+  border-radius: var(--md-ui-radius-md) var(--md-ui-radius-md) 0 0;
 }
 
 body.md-admin-shell .md-yh-page .md-yh-trait__icon {
@@ -283,9 +284,13 @@ body.md-admin-shell .md-yh-page .md-yh-trait__body {
 
 body.md-admin-shell .md-yh-page .md-yh-trait__row {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   align-items: end;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__row--top {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 body.md-admin-shell .md-yh-page .md-yh-trait__row--range {
@@ -293,14 +298,26 @@ body.md-admin-shell .md-yh-page .md-yh-trait__row--range {
   max-width: 420px;
 }
 
-body.md-admin-shell .md-yh-page .md-yh-trait__row--mapping {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+body.md-admin-shell .md-yh-page .md-yh-trait__links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__links .md-linkedobject {
+  width: 100%;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__row--switches {
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
 }
 
 body.md-admin-shell .md-yh-page .md-yh-trait__switches {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
 body.md-admin-shell .md-yh-page .md-yh-trait__switch {
@@ -556,10 +573,6 @@ body.md-admin-shell .md-yh-page .md-yh-about__list code {
   body.md-admin-shell .md-yh-page .md-yh-trait__row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-
-  body.md-admin-shell .md-yh-page .md-yh-trait__row--mapping {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 @media (max-width: 767.98px) {
@@ -573,7 +586,9 @@ body.md-admin-shell .md-yh-page .md-yh-about__list code {
   }
 
   body.md-admin-shell .md-yh-page .md-yh-trait__row,
-  body.md-admin-shell .md-yh-page .md-yh-trait__row--range {
+  body.md-admin-shell .md-yh-page .md-yh-trait__row--range,
+  body.md-admin-shell .md-yh-page .md-yh-trait__links,
+  body.md-admin-shell .md-yh-page .md-yh-trait__switches {
     grid-template-columns: minmax(0, 1fr);
   }
 

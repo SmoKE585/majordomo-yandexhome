@@ -456,7 +456,6 @@ class yandexhome extends module
         $out['DEVICES_TYPE_GROUPS'] = $this->typeGroupsForTemplate($rec['TYPE']);
         $out['INSTANCE_GROUPS'] = $this->instanceGroupsForTemplate();
         $out['LOCATION_OPTIONS'] = $this->locationOptions($rec['ROOM']);
-        $out['OBJECTS'] = $this->objectList();
         $out['REPORTABLE_CONFIGURED'] = $this->notifier->isConfigured() ? 1 : 0;
         $out['DEVICE_ICON'] = YandexHomeCatalog::deviceIcon($rec['TYPE']);
         $out['DEVICE_TYPE_TITLE'] = $this->e(YandexHomeCatalog::deviceDescription($rec['TYPE']));
@@ -1216,28 +1215,6 @@ EOD;
     }
 
     /**
-     * Objects available for linking.
-     *
-     * @return array<int,array<string,string>>
-     */
-    private function objectList()
-    {
-        $rows = SQLSelect('SELECT TITLE, DESCRIPTION FROM objects ORDER BY TITLE');
-        if (!is_array($rows)) {
-            return array();
-        }
-        $result = array();
-        foreach ($rows as $row) {
-            $result[] = array(
-                'TITLE' => $this->e(isset($row['TITLE']) ? $row['TITLE'] : ''),
-                'DESCRIPTION' => $this->e(isset($row['DESCRIPTION']) ? $row['DESCRIPTION'] : ''),
-            );
-        }
-
-        return $result;
-    }
-
-    /**
      * JSON payload consumed by the trait editor.
      *
      * @param array<string,mixed> $traits
@@ -1273,23 +1250,13 @@ EOD;
             $presets[$key] = $preset;
         }
 
-        $objects = array();
-        foreach ($this->objectList() as $object) {
-            $objects[] = array(
-                'title' => html_entity_decode($object['TITLE'], ENT_QUOTES, 'UTF-8'),
-                'description' => html_entity_decode($object['DESCRIPTION'], ENT_QUOTES, 'UTF-8'),
-            );
-        }
-
         $jobs = array(
             'traits' => $traits,
             'instanceConfig' => $instanceConfig,
             'catalog' => $catalog,
             'groups' => $groups,
             'presets' => $presets,
-            'objects' => $objects,
             'reportableConfigured' => $this->notifier->isConfigured(),
-            'propertyUrl' => ROOTHTML . 'panel/linkedobject.html?ajax=1&op=properties',
         );
 
         $json = json_encode($jobs, YandexHomeCatalog::JSON_FLAGS | JSON_HEX_TAG | JSON_HEX_AMP);
