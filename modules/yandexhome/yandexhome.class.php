@@ -529,9 +529,12 @@ class yandexhome extends module
         $out['OAUTH_EXISTS'] = $oauth !== null ? 1 : 0;
 
         $out['FLASH_SAVED'] = gr('saved', 'int');
-        $out['FLASH_FAKE_CREATED'] = gr('fake_created', 'int');
-        $out['FLASH_FAKE_DELETED'] = gr('fake_deleted', 'int');
-        $out['FLASH_MIGRATED'] = gr('migrated', 'int');
+        $fakeCreated = gr('fake_created', 'int');
+        $fakeDeleted = gr('fake_deleted', 'int');
+        $migrated = gr('migrated', 'int');
+        $out['FLASH_FAKE_CREATED'] = $fakeCreated > 0 ? $fakeCreated : '';
+        $out['FLASH_FAKE_DELETED'] = $fakeDeleted > 0 ? $fakeDeleted : '';
+        $out['FLASH_MIGRATED'] = $migrated > 0 ? $migrated : '';
         $out['FLASH_CALLBACK'] = (string)gr('callback');
         $out['FLASH_CALLBACK_HTTP'] = gr('http', 'int');
         $out['FLASH_OAUTH_CLEARED'] = gr('oauth_cleared', 'int');
