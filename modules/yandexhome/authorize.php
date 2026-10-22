@@ -11,6 +11,10 @@
 
 require_once __DIR__ . '/server.php';
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $request = OAuth2\Request::createFromGlobals();
 $yandexhome->WriteLog($yandexhome->IncomingRequestFormat($request));
 

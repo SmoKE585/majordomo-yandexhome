@@ -18,10 +18,6 @@ require_once DIR_MODULES . '/yandexhome/yandexhome.class.php';
 
 $yandexhome = new yandexhome();
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 $dbName = \MajorDoMo\Core\Config::string('DB_NAME');
 $dbHost = \MajorDoMo\Core\Config::string('DB_HOST');
 $dbPort = \MajorDoMo\Core\Config::string('DB_PORT');
