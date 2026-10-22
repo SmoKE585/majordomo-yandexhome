@@ -1284,7 +1284,13 @@ EOD;
             'propertyUrl' => ROOTHTML . 'panel/linkedobject.html?ajax=1&op=properties',
         );
 
-        return json_encode($jobs, YandexHomeCatalog::JSON_FLAGS | JSON_HEX_TAG | JSON_HEX_AMP);
+        $json = json_encode($jobs, YandexHomeCatalog::JSON_FLAGS | JSON_HEX_TAG | JSON_HEX_AMP);
+        if ($json === false) {
+            return '{}';
+        }
+
+        // partLoad treats `$(` in inserted HTML as inline JS; keep JSON inert.
+        return str_replace('$', '\\u0024', $json);
     }
 
     /**
