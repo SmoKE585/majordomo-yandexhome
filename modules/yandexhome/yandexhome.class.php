@@ -161,6 +161,11 @@ class yandexhome extends module
         $this->action = isset($this->action) ? (string)$this->action : '';
         $this->view_mode = isset($this->view_mode) ? (string)$this->view_mode : '';
         $this->mode = isset($this->mode) ? (string)$this->mode : '';
+        // Generic admin routes may pass only `id`; treat it as the device card.
+        if ($this->action == 'admin' && $this->view_mode === ''
+            && isset($this->id) && (int)$this->id > 0) {
+            $this->view_mode = 'edit_yandexhome_devices';
+        }
         if ($this->action == 'admin') {
             $this->admin($out);
         } else {
