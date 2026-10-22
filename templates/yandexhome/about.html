@@ -1,40 +1,55 @@
-﻿<!--# О модуле. #-->
-<div class="modal fade" id="about" tabindex="-1" role="dialog" aria-labelledby="about1" aria-hidden="true">
-   <div class="modal-dialog">
-      <div class="modal-content">
-         <div class="modal-header">
-            <button class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
-            <h4 class="modal-title">Yandex Home</h4>
-         </div>
-         <div class="modal-body" style="padding-bottom: 1px;">
-            <div class="float-right">
-               <img src="../img/modules/yandexhome.png"  width="48" height="48">
-               <br><br><p><b>v.1.4b</b><br>8.02.21</p>
+<!--#
+ @version 2.0 (yandexhome about)
+#-->
+
+<div class="md-yh-about">
+    <section class="md-card">
+        <header class="md-card__head">
+            <div class="md-card__titles">
+                <div class="md-card__eyebrow">Интеграция</div>
+                <h2 class="md-card__title">Yandex Home для MajorDoMo</h2>
+                <p class="md-card__subtitle">Приватный навык умного дома Яндекса на OAuth 2.0 и Provider Adapter API.</p>
             </div>
-            <p class="float-left">
-               Модуль поддержки <b>личных</b> (приватных) навыков для платформы умного дома <b>Яндекс</b>.<br><br>
-               Документация в <a href="https://kb.mjdm.ru/yandexhome_help/" target="_blank">Базе знаний</a>.<br>
-               Обсуждение модуля на <a href="https://mjdm.ru/forum/viewtopic.php?f=5&t=6498" target="_blank">форуме</a>.<br>
-               Проект в <a href="https://github.com/skysilver-lab/majordomo-yandexhome" target="_blank">Github</a>.<br>
-               Проект в <a href="https://connect.smartliving.ru/tasks/482.html" target="_blank">Connect</a>.<br>
-            </p>
-            <hr size="1">
-            <p class="float-left">
-               Поддержать разработку и развитие модуля:
-               <ul>
-                  <li>Yandex: <a href="https://money.yandex.ru/to/410011205062626" target="_blank">410011205062626</a></li>
-                  <li>PayPal: <a href="https://www.paypal.me/skysilver" target="_blank">paypal.me/skysilver</a></li>
-                  <li>Внутренний счет в <a href="https://connect.smartliving.ru/tasks/482.html" target="_blank">Connect</a></li>
-               </ul>
-            </p>
-            <h6>
-               Благодарности: <b>Vit</b>, <b>iden</b>, <b>Xor</b>, <b>ImHuman</b>, <b>AntPino</b>, <b>tarasfrompir</b>, <b>Sergey.Chek</b>, <b>webms</b>, <b>Anton_kulibin</b>, <b>TurburatoR</b>, <b>denis_1988_06</b>, <b>louso</b>, <b>Yden_nn</b>, <b>C_3AXAPOB</b>, <b>AlexAl77</b>, <b>cheetah</b>, <b>ahelper</b>, <b>dubler78</b>, <b>VlasVic</b>, <b>sbazhukov</b>, <b>Degu</b>, <b>saturn017</b>.
-            </h6>
-         </div>
-         <div class="modal-footer" style="margin-top: 1px;">
-            <div class="pull-left">Автор: <a href="https://telegram.me/agafonov_d" target="_blank">skysilver</a></div>
-            <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
-         </div>
-      </div>
-   </div>
+        </header>
+        <div class="md-card__body">
+            <p class="md-yh-about__text">Модуль публикует три вебхука (<code>authorize.php</code>, <code>token.php</code>, <code>smarthome.php</code>),
+                связывает аккаунт Яндекса с MajorDoMo и переводит запросы платформы в чтение и запись свойств объектов.
+                Устройства и умения настраиваются в этом разделе, а инструкция хранится в базе знаний модуля.</p>
+
+            <div class="md-yh-about__stats">
+                <div><strong>[#DEVICES_TOTAL#]</strong><span>устройств</span></div>
+                <div><strong>[#DEVICE_TYPES_TOTAL#]</strong><span>типов устройств</span></div>
+                <div><strong>[#TRAITS_TOTAL#]</strong><span>умений в каталоге</span></div>
+            </div>
+
+            <div class="md-yh-actions">
+                <a href="<#ROOTHTML#>panel/knowledge_base/module/yandexhome/README.html" class="md-btn md-btn--primary">
+                    <i class="ti ti-book" aria-hidden="true"></i><span class="md-btn__label">Открыть инструкцию</span>
+                </a>
+                <a href="?view_mode=settings" class="md-btn md-btn--secondary">
+                    <i class="ti ti-settings" aria-hidden="true"></i><span class="md-btn__label">Настройки</span>
+                </a>
+                <a href="[#YANDEX_CONSOLE_URL#]" class="md-btn md-btn--ghost" target="_blank" rel="noopener noreferrer">
+                    <i class="ti ti-external-link" aria-hidden="true"></i><span class="md-btn__label">Яндекс Диалоги</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="md-card">
+        <header class="md-card__head">
+            <div class="md-card__titles">
+                <div class="md-card__eyebrow">Совместимость</div>
+                <h2 class="md-card__title">Что изменилось</h2>
+            </div>
+        </header>
+        <div class="md-card__body">
+            <ul class="md-yh-about__list">
+                <li>Формат таблиц <code>yandexhome_devices</code> и <code>yandexhome_oauth</code> сохранён: существующие устройства и токены продолжают работать.</li>
+                <li>Вебхуки и OAuth2-эндпоинты остались по тем же адресам <code>/modules/yandexhome/*.php</code>.</li>
+                <li>Вместо Bootstrap 3 и bootstrap-select используется общая дизайн-система админки; редактор умений переписан на vanilla JS.</li>
+                <li>Документация модуля читается из <code>modules/yandexhome/docs/</code> и видна в базе знаний только при установленном модуле.</li>
+            </ul>
+        </div>
+    </section>
 </div>

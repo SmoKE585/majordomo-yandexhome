@@ -1,0 +1,124 @@
+<!--#
+ @version 2.0 (yandexhome list)
+#-->
+
+[#if RESULT#]
+<div class="md-table-wrap md-yh-table-wrap" data-md-table data-md-table-page-size="25" data-md-table-unit="устройств" data-md-table-unit-one="устройство" data-md-table-unit-few="устройства" data-md-table-unit-many="устройств">
+    <div class="md-table__toolbar">
+        <div class="md-table__search">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input type="search" data-md-table-search placeholder="Поиск по названию, типу и умению" aria-label="Поиск устройств" autocomplete="off">
+        </div>
+        <select class="md-table__filter" data-md-table-filter="room" aria-label="Фильтр по помещению">
+            <option value="">Все помещения</option>
+            [#begin ROOM_OPTIONS#]
+            <option value="[#TITLE#]"[#if SELECTED="1"#] selected[#endif#]>[#TITLE#]</option>
+            [#end ROOM_OPTIONS#]
+        </select>
+        <div class="md-table__meta" data-md-table-meta>Устройств: [#DEVICES_TOTAL#]</div>
+    </div>
+
+    <div class="md-table__scroll">
+        <table class="md-table">
+            <thead>
+                <tr>
+                    <th scope="col">
+                        <button type="button" class="md-table__sort" data-md-table-sort="title">Устройство <i class="ti ti-arrows-up-down" aria-hidden="true"></i></button>
+                    </th>
+                    <th scope="col">Тип</th>
+                    <th scope="col">Умения</th>
+                    <th scope="col">Помещение</th>
+                    <th scope="col">Состояние</th>
+                    <th scope="col" class="text-end"><span class="md-visually-hidden">Действия</span></th>
+                </tr>
+            </thead>
+            <tbody data-md-table-body>
+                [#begin RESULT#]
+                <tr data-md-row data-row-id="[#ID#]" data-room="[#ROOM_RAW#]" data-sort-title="[#TITLE#]" data-search="[#SEARCH#]">
+                    <td class="md-yh-col-device">
+                        <div class="md-table__name md-yh-cell">
+                            <span class="md-table__icon"><i class="ti ti-[#ICON#]" aria-hidden="true"></i></span>
+                            <div class="md-yh-cell__body">
+                                <a href="?view_mode=edit_yandexhome_devices&amp;id=[#ID#]"><strong>[#TITLE#]</strong></a>
+                                [#if DESCRIPTION!=""#]<small>[#DESCRIPTION#]</small>[#endif#]
+                                [#if MANUFACTURER!="" || MODEL!=""#]
+                                <span class="md-yh-cell__meta"><i class="ti ti-building-factory" aria-hidden="true"></i>[#MANUFACTURER#][#if MANUFACTURER!="" && MODEL!=""#] · [#endif#][#MODEL#]</span>
+                                [#endif#]
+                            </div>
+                        </div>
+                    </td>
+                    <td class="md-yh-col-type">
+                        <span class="md-badge md-badge--outline"><i class="ti ti-[#ICON#]" aria-hidden="true"></i>[#TYPE_TITLE#]</span>
+                    </td>
+                    <td class="md-yh-col-traits">
+                        <div class="md-yh-traits">
+                            [#begin TRAITS_LIST#]
+                            <span class="md-badge [#if LINKED="1"#]md-badge--success[#else#]md-badge--neutral[#endif#]" title="[#TYPE#] · [#CAPABILITY#]">
+                                <i class="ti [#if LINKED="1"#]ti-link[#else#]ti-unlink[#endif#]" aria-hidden="true"></i>[#LABEL#]
+                            </span>
+                            [#end TRAITS_LIST#]
+                        </div>
+                    </td>
+                    <td class="md-yh-col-room">
+                        [#if ROOM!=""#]
+                        <span class="md-yh-room"><i class="ti ti-map-pin" aria-hidden="true"></i>[#ROOM#]</span>
+                        [#else#]
+                        <span class="md-tree-empty">—</span>
+                        [#endif#]
+                    </td>
+                    <td class="md-yh-col-state">
+                        <div class="md-yh-state">
+                            [#if ALL_LINKED="1"#]
+                            <span class="md-badge md-badge--success"><i class="ti ti-link" aria-hidden="true"></i>Готово</span>
+                            [#else#]
+                            <span class="md-badge md-badge--warning"><i class="ti ti-unlink" aria-hidden="true"></i>Не всё привязано</span>
+                            [#endif#]
+                            [#if REPORTABLE="1"#]
+                            <span class="md-badge md-badge--info"><i class="ti ti-bell" aria-hidden="true"></i>Reportable</span>
+                            [#endif#]
+                        </div>
+                    </td>
+                    <td class="md-yh-col-actions">
+                        <div class="md-table__actions">
+                            <a href="?view_mode=edit_yandexhome_devices&amp;id=[#ID#]" class="md-icon-btn md-icon-btn--sm" data-bs-toggle="tooltip" data-bs-title="Редактировать" aria-label="Редактировать устройство [#TITLE#]">
+                                <i class="ti ti-pencil" aria-hidden="true"></i>
+                            </a>
+                            <a href="?view_mode=delete_yandexhome_devices&amp;id=[#ID#]" class="md-icon-btn md-icon-btn--sm md-icon-btn--danger" data-bs-toggle="tooltip" data-bs-title="Удалить" aria-label="Удалить устройство [#TITLE#]" data-md-confirm="Удалить устройство [#TITLE#]? Связи со свойствами объектов будут сняты.">
+                                <i class="ti ti-trash" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                [#end RESULT#]
+            </tbody>
+        </table>
+    </div>
+
+    <div class="md-table__empty" data-md-table-empty>
+        <div class="md-empty md-empty--compact">
+            <span class="md-empty__icon"><i class="ti ti-search" aria-hidden="true"></i></span>
+            <div class="md-empty__title">Ничего не найдено</div>
+            <p class="md-empty__text">Измените запрос или фильтр по помещению.</p>
+        </div>
+    </div>
+
+    <div class="md-table__footer">
+        <span data-md-table-count>Показано [#DEVICES_TOTAL#] из [#DEVICES_TOTAL#]</span>
+        <ul class="pagination md-pagination mb-0" data-md-table-pagination></ul>
+    </div>
+</div>
+[#else RESULT#]
+<div class="md-empty">
+    <span class="md-empty__icon"><i class="ti ti-home-bolt" aria-hidden="true"></i></span>
+    <div class="md-empty__title">Устройств пока нет</div>
+    <p class="md-empty__text">Добавьте первое устройство, выберите его тип и привяжите свойства объекта, которыми управляет MajorDoMo.</p>
+    <div class="md-empty__actions">
+        <a href="?view_mode=addnew_yandexhome_devices" class="md-btn md-btn--primary md-btn--sm">
+            <i class="ti ti-plus" aria-hidden="true"></i>Добавить устройство
+        </a>
+        <a href="<#ROOTHTML#>panel/knowledge_base/module/yandexhome/devices.html" class="md-btn md-btn--secondary md-btn--sm">
+            <i class="ti ti-book" aria-hidden="true"></i>Как привязать умения
+        </a>
+    </div>
+</div>
+[#endif RESULT#]

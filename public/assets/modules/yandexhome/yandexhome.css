@@ -1,0 +1,612 @@
+/*
+ * Yandex Home module styles.
+ *
+ * Loaded only from templates/yandexhome/action_admin.html. All colors and
+ * radii come from --md-ui-* tokens so the light/dark themes keep working.
+ */
+
+body.md-admin-shell .md-yh-page .md-yh-cell {
+  align-items: flex-start;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-cell__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-cell__body small {
+  color: var(--md-ui-muted);
+  font-size: var(--md-ui-fs-xs);
+  overflow-wrap: anywhere;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-cell__meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--md-ui-muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-cell__meta i {
+  font-size: 12px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-col-device {
+  min-width: 240px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-col-type {
+  min-width: 150px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-col-traits {
+  min-width: 260px;
+  max-width: 420px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-col-room {
+  min-width: 120px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-col-state {
+  min-width: 150px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-col-actions {
+  min-width: 90px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-traits .md-badge {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-room {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--md-ui-text-soft);
+  font-size: var(--md-ui-fs-sm);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-room i {
+  color: var(--md-ui-muted);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-table-wrap .md-table__scroll {
+  contain: paint;
+}
+
+/* Forms --------------------------------------------------------------- */
+
+body.md-admin-shell .md-yh-page .md-yh-form {
+  display: grid;
+  gap: 16px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-fields {
+  display: grid;
+  gap: 14px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-fields-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-form-actions .md-yh-delete {
+  margin-left: auto;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-config {
+  padding: 0;
+  background: var(--md-ui-surface);
+  border: 1px solid var(--md-ui-border);
+  border-radius: var(--md-ui-radius-md);
+  box-shadow: var(--md-ui-shadow-xs);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-config > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  color: var(--md-ui-text-soft);
+  font-size: var(--md-ui-fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-config > summary::-webkit-details-marker {
+  display: none;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-config[open] > summary {
+  border-bottom: 1px solid var(--md-ui-border);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-config__json {
+  max-height: 360px;
+  margin: 0;
+  padding: 14px 16px;
+  overflow: auto;
+  color: var(--md-ui-text-soft);
+  background: var(--md-ui-surface-2);
+  font-family: var(--md-ui-font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Trait editor -------------------------------------------------------- */
+
+body.md-admin-shell .md-yh-page .md-yh-trait-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait-picker {
+  flex: 1 1 320px;
+  max-width: 520px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait-add {
+  flex: 0 0 auto;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait-message {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border: 1px solid var(--md-ui-border);
+  border-radius: var(--md-ui-radius-sm);
+  background: var(--md-ui-surface-2);
+  color: var(--md-ui-text-soft);
+  font-size: var(--md-ui-fs-sm);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait-message--warning {
+  color: var(--md-ui-warning);
+  border-color: var(--md-ui-warning);
+  background: var(--md-ui-warning-soft);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait-message--error {
+  color: var(--md-ui-danger);
+  border-color: var(--md-ui-danger);
+  background: var(--md-ui-danger-soft);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-traits-editor {
+  display: grid;
+  gap: 12px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait {
+  overflow: hidden;
+  background: var(--md-ui-surface);
+  border: 1px solid var(--md-ui-border);
+  border-radius: var(--md-ui-radius-md);
+  box-shadow: var(--md-ui-shadow-xs);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--md-ui-surface-2);
+  border-bottom: 1px solid var(--md-ui-border);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  color: var(--md-ui-primary);
+  background: var(--md-ui-primary-soft);
+  border-radius: var(--md-ui-radius-sm);
+  font-size: 17px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__title {
+  color: var(--md-ui-text);
+  font-size: var(--md-ui-fs-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  color: var(--md-ui-muted);
+  font-size: 11px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__meta code {
+  font-family: var(--md-ui-font-mono);
+  font-size: 11px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__body {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__row--range {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 420px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__row--mapping {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: start;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__switches {
+  display: grid;
+  gap: 10px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__switch {
+  align-items: flex-start;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 11px;
+  color: var(--md-ui-muted);
+  background: var(--md-ui-surface-2);
+  border: 1px dashed var(--md-ui-border-strong);
+  border-radius: var(--md-ui-radius-sm);
+  font-size: var(--md-ui-fs-xs);
+  line-height: 1.45;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-trait__callout i {
+  margin-top: 1px;
+  font-size: 14px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-map {
+  padding: 10px;
+  background: var(--md-ui-surface-2);
+  border: 1px solid var(--md-ui-border);
+  border-radius: var(--md-ui-radius-sm);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-map__head,
+body.md-admin-shell .md-yh-page .md-yh-map__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 34px;
+  gap: 8px;
+  align-items: center;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-map__head {
+  margin-bottom: 6px;
+  color: var(--md-ui-muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-map__row {
+  margin-bottom: 6px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-map__add {
+  margin-top: 2px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-traits-empty {
+  margin-top: 4px;
+}
+
+/* Settings ------------------------------------------------------------ */
+
+body.md-admin-shell .md-yh-page .md-yh-input-shell,
+body.md-admin-shell .md-yh-page .md-input-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+body.md-admin-shell .md-yh-page .md-input-shell .md-input {
+  padding-right: 42px;
+}
+
+body.md-admin-shell .md-yh-page .md-input-shell__action {
+  position: absolute;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--md-ui-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--md-ui-radius-xs);
+  cursor: pointer;
+}
+
+body.md-admin-shell .md-yh-page .md-input-shell__action:hover {
+  color: var(--md-ui-primary);
+  background: var(--md-ui-surface-2);
+}
+
+body.md-admin-shell .md-yh-page .md-input-shell__action:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--md-ui-focus);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-webhooks {
+  display: grid;
+  gap: 10px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-webhook {
+  padding: 12px 14px;
+  background: var(--md-ui-surface-2);
+  border: 1px solid var(--md-ui-border);
+  border-radius: var(--md-ui-radius-sm);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-webhook__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-webhook__path {
+  color: var(--md-ui-muted);
+  font-family: var(--md-ui-font-mono);
+  font-size: 11px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-webhook__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-webhook__row code {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--md-ui-text-soft);
+  font-family: var(--md-ui-font-mono);
+  font-size: 12px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-webhook-note {
+  margin-top: 12px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-meta {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-meta > div {
+  display: grid;
+  grid-template-columns: minmax(130px, .8fr) minmax(0, 1.6fr);
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--md-ui-border);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-meta > div:last-child {
+  border-bottom: 0;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-meta dt {
+  color: var(--md-ui-muted);
+  font-size: var(--md-ui-fs-xs);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-meta dd {
+  margin: 0;
+  color: var(--md-ui-text);
+  font-size: var(--md-ui-fs-sm);
+  overflow-wrap: anywhere;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-meta code {
+  font-family: var(--md-ui-font-mono);
+  font-size: 12px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-maintenance__note {
+  margin: 12px 0 0;
+  color: var(--md-ui-muted);
+  font-size: var(--md-ui-fs-xs);
+}
+
+/* About --------------------------------------------------------------- */
+
+body.md-admin-shell .md-yh-page .md-yh-about {
+  display: grid;
+  gap: 16px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-about__text {
+  margin: 0 0 16px;
+  color: var(--md-ui-text-soft);
+  line-height: 1.65;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-about__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-about__stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  background: var(--md-ui-surface-2);
+  border: 1px solid var(--md-ui-border);
+  border-radius: var(--md-ui-radius-sm);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-about__stats strong {
+  color: var(--md-ui-text);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-about__stats span {
+  color: var(--md-ui-muted);
+  font-size: var(--md-ui-fs-xs);
+}
+
+body.md-admin-shell .md-yh-page .md-yh-about__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--md-ui-text-soft);
+  line-height: 1.6;
+}
+
+body.md-admin-shell .md-yh-page .md-yh-about__list code {
+  font-family: var(--md-ui-font-mono);
+  font-size: 12px;
+}
+
+@media (max-width: 1199.98px) {
+  body.md-admin-shell .md-yh-page .md-yh-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.md-admin-shell .md-yh-page .md-yh-trait__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.md-admin-shell .md-yh-page .md-yh-trait__row--mapping {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767.98px) {
+  body.md-admin-shell .md-yh-page .md-yh-trait-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.md-admin-shell .md-yh-page .md-yh-trait-picker {
+    max-width: none;
+  }
+
+  body.md-admin-shell .md-yh-page .md-yh-trait__row,
+  body.md-admin-shell .md-yh-page .md-yh-trait__row--range {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.md-admin-shell .md-yh-page .md-yh-fields-pair,
+  body.md-admin-shell .md-yh-page .md-yh-about__stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  body.md-admin-shell .md-yh-page .md-yh-meta > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  body.md-admin-shell .md-yh-page .md-yh-form-actions .md-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  body.md-admin-shell .md-yh-page .md-yh-form-actions .md-yh-delete {
+    margin-left: 0;
+  }
+
+  body.md-admin-shell .md-yh-page .md-yh-webhook__row {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 575.98px) {
+  body.md-admin-shell .md-yh-page .md-yh-map__head {
+    display: none;
+  }
+
+  body.md-admin-shell .md-yh-page .md-yh-map__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 34px;
+  }
+}

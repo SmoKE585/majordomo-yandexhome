@@ -1,14 +1,18 @@
 <?php
+/**
+ * OAuth2 token endpoint (authorization code, refresh token, client credentials).
+ *
+ * @package MajorDoMo
+ */
 
-require_once ('server.php');
+require_once __DIR__ . '/server.php';
+
+header('Cache-Control: no-store');
+header('Pragma: no-cache');
+header('X-Content-Type-Options: nosniff');
 
 $request = OAuth2\Request::createFromGlobals();
-
-// Пишем в лог входящий запрос.
 $yandexhome->WriteLog($yandexhome->IncomingRequestFormat($request));
 
-// Обработка запроса на токен доступа OAuth2.0 и отправка ответа клиенту.
 $server->handleTokenRequest($request)->send();
-
-// Пишем в лог ответ.
-$yandexhome->WriteLog('token.php >>> ' . $server->getResponse());
+$yandexhome->WriteLog('token.php >>> response sent');

@@ -1,89 +1,169 @@
-<!--# Главная страница модуля в Панели управления. #-->
-[#if VIEW_MODE=""#]
-   <!--# Верхняя строка с кнопоками 'Настройки', 'Добавить', 'Синхронизировать', 'Справка', 'О модуле'. #-->
-   <div>
-      <!--# Логотип. #-->
-      <img src="../img/modules/yandexhome.png"  width="30" height="30">
-      &nbsp;&nbsp;&nbsp;
-      <!--# Кнопка 'Настройки'. #-->
-      <a class="btn btn-default" href="#api_settings" data-toggle="collapse"><i class="glyphicon glyphicon-cog"></i> Настройки</a>
-      &nbsp;&nbsp;&nbsp;
-      <!--# Кнопка 'Добавить'. #-->
-      <a href="?view_mode=addnew_yandexhome_devices" class="btn btn-default" title="Добавить устройство"><i class="glyphicon glyphicon-plus"></i></a>
-      &nbsp;&nbsp;
-      <!--# Кнопка 'Создать фейковые устройства'. #-->
-      <a href="?view_mode=create_fake_devices" class="btn btn-default" title="Создать фейковые устройства для загрузки иконок в Яндекс" onClick="return confirm('Создать фейковые устройства по всем типам?')"><i class="glyphicon glyphicon-duplicate"></i> Фейки: создать</a>
-      &nbsp;&nbsp;
-      <!--# Кнопка 'Удалить фейковые устройства'. #-->
-      <a href="?view_mode=delete_fake_devices" class="btn btn-default" title="Удалить фейковые устройства" onClick="return confirm('Удалить все фейковые устройства, созданные для иконок?')"><i class="glyphicon glyphicon-trash"></i> Фейки: удалить</a>
-      &nbsp;&nbsp;&nbsp;
-      <!--# Ссылка на Яндекс Диалоги. #-->
-      <a href="https://dialogs.yandex.ru/developer/skills/" title="Перейти в Яндекс Диалоги" target="_blank">
-         <img src="../templates/yandexhome/img/dialog_logo.png"  width="30" height="30">
-      </a>
-      &nbsp;&nbsp;&nbsp;
-      <!--# Кнопка 'Синхронизировать'. #-->
-      <!--#<span class="btn btn-default disabled" onclick="SendSynqRequest();" title="Синхронизировать"><i class="glyphicon glyphicon-refresh"></i></span>#-->
-      <!--# Кнопка 'О модуле'. #-->
-      <div class="float-right">&nbsp;&nbsp;&nbsp;&nbsp;</div>
-      <button class="btn btn-primary btn-sm float-right" data-toggle="modal" data-target="#about">О модуле&nbsp;&nbsp;<span class="glyphicon glyphicon-info-sign icon-white"></span></button>
-      <!--# Кнопка 'Справка'. #-->
-      <div class="float-right">&nbsp;&nbsp;&nbsp;</div>
-      <a href="?view_mode=show_help" class="btn btn-default btn-sm float-right" title="Справка"><i class="glyphicon glyphicon-question-sign"></i></a>
-   </div>
+<!--#
+ @version 2.0 (yandexhome)
+#-->
 
-   <!--# Выпадающее меню настроек. #-->
-   [#inc settings.html#]
+<link rel="stylesheet" href="<#ROOTHTML#>assets/modules/yandexhome/yandexhome.css?v=2026-10-22-1">
+<script src="<#ROOTHTML#>assets/modules/yandexhome/yandexhome.js?v=2026-10-22-1" defer></script>
 
-   [#if FAKE_CREATED!=""#]
-      <div class="alert alert-info" role="alert" style="margin-top:10px;">Создано фейковых устройств: <b>[#FAKE_CREATED#]</b></div>
-   [#endif#]
-   [#if FAKE_DELETED!=""#]
-      <div class="alert alert-info" role="alert" style="margin-top:10px;">Удалено фейковых устройств: <b>[#FAKE_DELETED#]</b></div>
-   [#endif#]
+[#if VIEW_MODE="" || VIEW_MODE="search_yandexhome_devices"#]
+<div class="md-ui-page md-ui-page--stack md-yh-page">
+    <header class="md-ui-hero">
+        <div>
+            <div class="md-ui-hero__eyebrow"><i class="ti ti-home-bolt" aria-hidden="true"></i>Yandex Home</div>
+            <h1 class="md-ui-hero__title">Устройства для Алисы</h1>
+            <p class="md-ui-hero__lede">Приватный навык умного дома Яндекса: OAuth-связка аккаунтов и Provider Adapter API поверх свойств MajorDoMo.</p>
+            <div class="md-ui-hero__meta">
+                <span class="md-ui-hero__meta-item"><i class="ti ti-devices" aria-hidden="true"></i>Устройств: <strong>[#DEVICES_TOTAL#]</strong></span>
+                <span class="md-ui-hero__meta-item"><i class="ti ti-map-pin" aria-hidden="true"></i>Помещений: <strong>[#ROOMS_TOTAL#]</strong></span>
+                <span class="md-ui-hero__meta-item"><i class="ti ti-list-check" aria-hidden="true"></i>Умений: <strong>[#TRAITS_TOTAL#]</strong></span>
+                <span class="md-ui-hero__meta-item"><i class="ti ti-link" aria-hidden="true"></i>Привязано: <strong>[#LINKED_TRAITS_TOTAL#]</strong></span>
+            </div>
+        </div>
+        <div class="md-ui-hero__actions">
+            <a href="?view_mode=addnew_yandexhome_devices" class="md-btn md-btn--primary">
+                <i class="ti ti-plus" aria-hidden="true"></i><span class="md-btn__label">Добавить устройство</span>
+            </a>
+            <a href="?view_mode=settings" class="md-btn md-btn--secondary">
+                <i class="ti ti-settings" aria-hidden="true"></i><span class="md-btn__label">Настройки</span>
+            </a>
+            <a href="<#ROOTHTML#>panel/knowledge_base/module/yandexhome/README.html" class="md-btn md-btn--ghost">
+                <i class="ti ti-book" aria-hidden="true"></i><span class="md-btn__label">Инструкция</span>
+            </a>
+        </div>
+    </header>
 
-   <!--# Область со списком устройств. #-->
-   [#if VIEW_STYLE="table" OR VIEW_STYLE="table_group"#]
-      [#inc devices_list_table.html#]
-   [#else#]
-      [#inc devices_list_panels.html#]
-   [#endif#]
+    <div class="md-ui-kpi-grid">
+        <div class="md-kpi md-kpi--primary">
+            <div class="md-kpi__top">
+                <span class="md-kpi__icon"><i class="ti ti-devices" aria-hidden="true"></i></span>
+                <span class="md-kpi__label">Устройства</span>
+            </div>
+            <div class="md-kpi__value">[#DEVICES_TOTAL#]</div>
+            <div class="md-kpi__meta">В навыке Yandex Home</div>
+        </div>
+        <div class="md-kpi md-kpi--info">
+            <div class="md-kpi__top">
+                <span class="md-kpi__icon"><i class="ti ti-list-check" aria-hidden="true"></i></span>
+                <span class="md-kpi__label">Умения</span>
+            </div>
+            <div class="md-kpi__value">[#TRAITS_TOTAL#]</div>
+            <div class="md-kpi__meta">Capabilities и properties</div>
+        </div>
+        <div class="md-kpi md-kpi--success">
+            <div class="md-kpi__top">
+                <span class="md-kpi__icon"><i class="ti ti-link" aria-hidden="true"></i></span>
+                <span class="md-kpi__label">Привязано</span>
+            </div>
+            <div class="md-kpi__value">[#LINKED_TRAITS_TOTAL#]</div>
+            <div class="md-kpi__meta">Умений с объектом и свойством</div>
+        </div>
+        <div class="md-kpi md-kpi--warning">
+            <div class="md-kpi__top">
+                <span class="md-kpi__icon"><i class="ti ti-bell" aria-hidden="true"></i></span>
+                <span class="md-kpi__label">Reportable</span>
+            </div>
+            <div class="md-kpi__value">[#REPORTABLE_DEVICES_TOTAL#]</div>
+            <div class="md-kpi__meta">Устройств с уведомлениями</div>
+        </div>
+    </div>
 
-   <!--# Модальное окно со сведениями о модуле. #-->
-   [#inc about.html#]
-[#endif#]
+    [#if OAUTH_CONFIGURED="0"#]
+    <div class="md-alert md-alert--warning" role="alert">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+        <div>
+            <strong>OAuth2 ID и KEY не заполнены.</strong>
+            Без них Яндекс не сможет авторизовать навык. Откройте
+            <a href="?view_mode=settings">настройки</a> и сгенерируйте пару.
+        </div>
+    </div>
+    [#endif#]
 
-<!--# Интерфейс ручного добавления устройства. #-->
-[#if VIEW_MODE="addnew_yandexhome_devices"#]
-   [#inc devices_addnew.html#]
-[#endif#]
+    [#if READONLY_MODE="1"#]
+    <div class="md-alert md-alert--info" role="alert">
+        <i class="ti ti-lock" aria-hidden="true"></i>
+        <div><strong>Автономный режим включён.</strong> Алиса видит устройства, но не может менять свойства объектов.</div>
+    </div>
+    [#endif#]
 
-<!--# Интерфейс редактирования настроек устройства и просмотра его данных. #-->
-[#if VIEW_MODE="edit_yandexhome_devices"#]
-   [#if ID!=""#]
-      <legend>[#TITLE#][#if ROOM!=""#] ([#ROOM#])[#endif#]</legend>
-      [#inc devices_edit.html#]
-   [#endif#]
-[#endif#]
+    [#HINT#]
 
-<!--# Справка по модулю. #-->
-[#if VIEW_MODE="show_help"#]
-   [#inc ./help/help_ru.html#] 
-[#endif#]
+    [#inc devices_search_admin.html#]
+</div>
+[#endif VIEW_MODE#]
 
-<script type="text/javascript">
+[#if VIEW_MODE="addnew_yandexhome_devices" || VIEW_MODE="edit_yandexhome_devices"#]
+<div class="md-ui-page md-ui-page--stack md-yh-page md-yh-editor">
+    <header class="md-ui-hero">
+        <div>
+            <div class="md-ui-hero__eyebrow"><i class="ti ti-[#DEVICE_ICON#]" aria-hidden="true"></i>Yandex Home · устройство</div>
+            <h1 class="md-ui-hero__title">[#if ID!=""#][#if TITLE!=""#][#TITLE#][#else#]Устройство без названия[#endif#][#else#]Новое устройство[#endif#]</h1>
+            <p class="md-ui-hero__lede">Название, тип и умения, которые Яндекс покажет в приложении умного дома.</p>
+            [#if ID!=""#]
+            <div class="md-ui-hero__meta">
+                <span class="md-ui-hero__meta-item"><i class="ti ti-category" aria-hidden="true"></i><strong>[#DEVICE_TYPE_TITLE#]</strong></span>
+                [#if ROOM!=""#]<span class="md-ui-hero__meta-item"><i class="ti ti-map-pin" aria-hidden="true"></i><strong>[#ROOM#]</strong></span>[#endif#]
+                <span class="md-ui-hero__meta-item"><i class="ti ti-list-check" aria-hidden="true"></i>Умений: <strong>[#TRAITS_TOTAL#]</strong></span>
+                <span class="md-ui-hero__meta-item"><i class="ti ti-link" aria-hidden="true"></i>Привязано: <strong>[#LINKED_TRAITS_TOTAL#]</strong></span>
+            </div>
+            [#endif#]
+        </div>
+        <div class="md-ui-hero__actions">
+            <a href="?view_mode=search_yandexhome_devices" class="md-btn md-btn--secondary">
+                <i class="ti ti-arrow-left" aria-hidden="true"></i><span class="md-btn__label">К списку</span>
+            </a>
+        </div>
+    </header>
 
-   function SendSynqRequest() {
+    [#HINT#]
 
-      var url = '/ajax/yandexhome.html?op=SendSynqRequest';
+    [#inc devices_edit.html#]
+</div>
+[#endif VIEW_MODE#]
 
-      $.ajax({
-         url: url,
-         cache: false,
-         success: function(html){
-            //console.log(html);
-         }
-      });
-   }
+[#if VIEW_MODE="settings" || VIEW_MODE="update_settings"#]
+<div class="md-ui-page md-ui-page--stack md-yh-page md-yh-settings">
+    <header class="md-ui-hero">
+        <div>
+            <div class="md-ui-hero__eyebrow"><i class="ti ti-settings" aria-hidden="true"></i>Yandex Home</div>
+            <h1 class="md-ui-hero__title">Настройки навыка</h1>
+            <p class="md-ui-hero__lede">Учётные данные OAuth2, вебхуки, уведомления и обслуживание адаптера.</p>
+            <div class="md-ui-hero__meta">
+                <span class="md-ui-hero__meta-item"><i class="ti ti-key" aria-hidden="true"></i>OAuth2: <strong>[#if OAUTH_CONFIGURED="1"#]настроен[#else#]не настроен[#endif#]</strong></span>
+                <span class="md-ui-hero__meta-item"><i class="ti ti-bell" aria-hidden="true"></i>Callbacks: <strong>[#if CALLBACK_CONFIGURED="1"#]включены[#else#]выключены[#endif#]</strong></span>
+                <span class="md-ui-hero__meta-item"><i class="ti ti-devices" aria-hidden="true"></i>Устройств: <strong>[#DEVICES_TOTAL#]</strong></span>
+            </div>
+        </div>
+        <div class="md-ui-hero__actions">
+            <a href="?view_mode=search_yandexhome_devices" class="md-btn md-btn--secondary">
+                <i class="ti ti-arrow-left" aria-hidden="true"></i><span class="md-btn__label">К устройствам</span>
+            </a>
+            <a href="<#ROOTHTML#>panel/knowledge_base/module/yandexhome/setup.html" class="md-btn md-btn--ghost">
+                <i class="ti ti-book" aria-hidden="true"></i><span class="md-btn__label">Инструкция</span>
+            </a>
+        </div>
+    </header>
 
-</script>
+    [#HINT#]
+
+    [#inc settings.html#]
+</div>
+[#endif VIEW_MODE#]
+
+[#if VIEW_MODE="about"#]
+<div class="md-ui-page md-ui-page--stack md-yh-page">
+    <header class="md-ui-hero">
+        <div>
+            <div class="md-ui-hero__eyebrow"><i class="ti ti-home-bolt" aria-hidden="true"></i>Yandex Home</div>
+            <h1 class="md-ui-hero__title">О модуле</h1>
+            <p class="md-ui-hero__lede">Адаптер приватного навыка умного дома Яндекса для MajorDoMo. Версия [#MODULE_VERSION#].</p>
+        </div>
+        <div class="md-ui-hero__actions">
+            <a href="?view_mode=search_yandexhome_devices" class="md-btn md-btn--secondary">
+                <i class="ti ti-arrow-left" aria-hidden="true"></i><span class="md-btn__label">Назад</span>
+            </a>
+        </div>
+    </header>
+
+    [#inc about.html#]
+</div>
+[#endif VIEW_MODE#]

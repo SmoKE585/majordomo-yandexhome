@@ -1,38 +1,50 @@
 <?php
+/**
+ * Shared bootstrap for Yandex Home webhooks.
+ *
+ * These endpoints are called by Yandex directly (outside the admin shell), so
+ * they boot the project the same way as other module endpoints: application
+ * root, config, libraries, settings, then the OAuth2 server.
+ *
+ * @package MajorDoMo
+ */
 
-chdir (dirname (__FILE__) . '/../../');
-
-include_once ('./config.php');
-include_once ('./lib/loader.php');
-include_once ('./load_settings.php');
-
-$timezone_row = SQLSelectOne('SELECT NAME, VALUE FROM settings WHERE NAME="SITE_TIMEZONE"');
-$timezone = is_array($timezone_row) && isset($timezone_row['VALUE']) ? $timezone_row['VALUE'] : null;
-
-if ($timezone != null && $timezone != '') {
-   date_default_timezone_set ($timezone);
-} else {
-   date_default_timezone_set ('Europe/Moscow');
-}
-
-include_once (DIR_MODULES . '/yandexhome/yandexhome.class.php');
+$applicationRoot = dirname(__DIR__, 2);
+require_once $applicationRoot . '/bootstrap.php';
+require_once MD_APP_ROOT . '/config.php';
+require_once MD_APP_ROOT . '/lib/loader.php';
+require_once MD_APP_ROOT . '/load_settings.php';
+require_once DIR_MODULES . '/yandexhome/yandexhome.class.php';
 
 $yandexhome = new yandexhome();
 
-session_start ();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-$dsn = 'mysql:dbname=' . DB_NAME . ';host=' . DB_HOST;
+$dbName = \MajorDoMo\Core\Config::string('DB_NAME');
+$dbHost = \MajorDoMo\Core\Config::string('DB_HOST');
+$dbPort = \MajorDoMo\Core\Config::string('DB_PORT');
+$dsn = 'mysql:dbname=' . $dbName . ';host=' . $dbHost;
+if ($dbPort !== '') {
+    $dsn .= ';port=' . $dbPort;
+}
+$dsn .= ';charset=utf8mb4';
 
-require_once (DIR_MODULES . '/yandexhome/lib/OAuth2/Autoloader.php');
-
+require_once __DIR__ . '/lib/OAuth2/Autoloader.php';
 OAuth2\Autoloader::register();
 
-$storage = new OAuth2\Storage\MajordomoPdo(array('dsn' => $dsn, 'username' => DB_USER, 'password' => DB_PASSWORD));
+$storage = new OAuth2\Storage\MajordomoPdo(array(
+    'dsn' => $dsn,
+    'username' => \MajorDoMo\Core\Config::string('DB_USER'),
+    'password' => \MajorDoMo\Core\Config::string('DB_PASSWORD'),
+));
 
-$server = new OAuth2\Server($storage, array('access_lifetime' => 7*24*3600));
-
+$server = new OAuth2\Server($storage, array(
+    'access_lifetime' => 7 * 24 * 3600,
+));
 $server->addGrantType(new OAuth2\GrantType\ClientCredentials($storage));
-
 $server->addGrantType(new OAuth2\GrantType\AuthorizationCode($storage));
-
-$server->addGrantType(new OAuth2\GrantType\RefreshToken($storage, array('always_issue_new_refresh_token' => true)));
+$server->addGrantType(new OAuth2\GrantType\RefreshToken($storage, array(
+    'always_issue_new_refresh_token' => true,
+)));

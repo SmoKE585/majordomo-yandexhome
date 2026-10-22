@@ -1,174 +1,229 @@
-<!--# Область настроек. #-->
-<div class="collapse" id='api_settings'>
-   &nbsp;
-   <form action="?" method="post" enctype="multipart/form-data" name="frmEdit" class="form-horizontal">
-      <fieldset>
-         <div class="form-group">
-            <label class="control-label">Логин пользователя
-               <span class='support-hover' tabindex="1" data-title="Укажите имя пользователя, которое будет использовано при добавлении вашего навыка в приложение Yandex Home, а также при идентификации устройств на стороне Yandex.">
-                  <i class="glyphicon glyphicon-info-sign"></i>
-               </span>
-            </label>
-            <div class="col-lg-8"><input class="form-control" type="text" autocomplete="username" name="user_name" value="[#if USER_NAME!=""#][#USER_NAME#][#endif#]" class="input"></div>
-         </div>
-         <div class="form-group">
-            <label class="control-label">Пароль пользователя
-               <span class='support-hover' tabindex="1" data-title="Укажите пароль пользователя, который потребуется указать при добавлении вашего навыка в приложение Yandex Home.">
-                  <i class="glyphicon glyphicon-info-sign"></i>
-               </span>
-            </label>
-            <div class="col-lg-8"><input class="form-control" type="password" autocomplete="current-password" name="user_pass" value="[#if USER_PASS!=""#][#USER_PASS#][#endif#]" class="input"></div>
-         </div>
-         <div class="form-group">
-            <label class="control-label">OAuth2 ID навыка
-               <span class='support-hover' tabindex="1" data-title="Клиентский идентификатор (Client Identifier) навыка, по которому модуль идентифицирует запросы от Yandex. Указывается в настройках навыка при его создании в личном кабинете Яндекс Диалоги.">
-                  <i class="glyphicon glyphicon-info-sign"></i>
-               </span>
-            </label>
-            <div class="col-lg-8">
-               <input class="form-control" type="text" name="client_id" id="client_id" value="[#if CLIENT_ID!=""#][#CLIENT_ID#][#endif#]" class="input">
+<!--#
+ @version 2.0 (yandexhome settings)
+#-->
+
+[#if FLASH_SAVED="1"#]
+<div class="md-alert md-alert--success" role="status"><i class="ti ti-circle-check" aria-hidden="true"></i><div>Настройки сохранены.</div></div>
+[#endif#]
+[#if FLASH_FAKE_CREATED!=""#]
+<div class="md-alert md-alert--info" role="status"><i class="ti ti-info-circle" aria-hidden="true"></i><div>Создано фейковых устройств: <strong>[#FLASH_FAKE_CREATED#]</strong>.</div></div>
+[#endif#]
+[#if FLASH_FAKE_DELETED!=""#]
+<div class="md-alert md-alert--info" role="status"><i class="ti ti-info-circle" aria-hidden="true"></i><div>Удалено фейковых устройств: <strong>[#FLASH_FAKE_DELETED#]</strong>.</div></div>
+[#endif#]
+[#if FLASH_MIGRATED!=""#]
+<div class="md-alert md-alert--info" role="status"><i class="ti ti-info-circle" aria-hidden="true"></i><div>Пересобрано CONFIG устройств: <strong>[#FLASH_MIGRATED#]</strong>.</div></div>
+[#endif#]
+[#if FLASH_CALLBACK="ok"#]
+<div class="md-alert md-alert--success" role="status"><i class="ti ti-send" aria-hidden="true"></i><div>Яндекс принял discovery-callback (HTTP [#FLASH_CALLBACK_HTTP#]).</div></div>
+[#endif#]
+[#if FLASH_CALLBACK="error"#]
+<div class="md-alert md-alert--danger" role="alert"><i class="ti ti-alert-circle" aria-hidden="true"></i><div>Callback не доставлен (HTTP [#FLASH_CALLBACK_HTTP#]). Проверьте токен и ID навыка, журнал модуля.</div></div>
+[#endif#]
+[#if FLASH_OAUTH_CLEARED="1"#]
+<div class="md-alert md-alert--warning" role="alert"><i class="ti ti-key" aria-hidden="true"></i><div>OAuth-записи удалены. Пользователям нужно заново объединить аккаунты.</div></div>
+[#endif#]
+
+<form action="?" method="post" class="md-yh-settings-form" autocomplete="off">
+    <input type="hidden" name="view_mode" value="update_settings">
+
+    <div class="md-yh-form-grid">
+        <section class="md-card">
+            <header class="md-card__head">
+                <div class="md-card__titles">
+                    <div class="md-card__eyebrow">OAuth2</div>
+                    <h2 class="md-card__title">Доступ к навыку</h2>
+                    <p class="md-card__subtitle">Логин и пароль запрашиваются при объединении аккаунтов, а ID и KEY вводятся в консоли Яндекс Диалогов.</p>
+                </div>
+            </header>
+            <div class="md-card__body">
+                <div class="md-yh-fields">
+                    <div class="md-field">
+                        <label class="md-field__label" for="yh-user-name">Логин пользователя</label>
+                        <div class="md-field__control">
+                            <input class="md-input" id="yh-user-name" type="text" name="user_name" value="[#USER_NAME#]" maxlength="100" autocomplete="off" placeholder="yandex">
+                        </div>
+                        <div class="md-field__hint">Придумайте отдельный логин для связки аккаунтов.</div>
+                    </div>
+                    <div class="md-field">
+                        <label class="md-field__label" for="yh-user-pass">Пароль пользователя</label>
+                        <div class="md-input-shell">
+                            <input class="md-input" id="yh-user-pass" type="password" name="user_pass" value="[#USER_PASS#]" maxlength="200" autocomplete="new-password" placeholder="Пароль для Яндекс">
+                            <button class="md-input-shell__action" type="button" data-yh-toggle-password="yh-user-pass" aria-label="Показать пароль">
+                                <i class="ti ti-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="md-field__hint">Хранится в настройках модуля; не используйте пароль администратора.</div>
+                    </div>
+                    <div class="md-field">
+                        <label class="md-field__label" for="yh-client-id">OAuth2 ID</label>
+                        <div class="md-input-shell">
+                            <input class="md-input" id="yh-client-id" type="text" name="client_id" value="[#CLIENT_ID#]" maxlength="100" spellcheck="false" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+                            <button class="md-input-shell__action" type="button" data-yh-generate="yh-client-id" aria-label="Сгенерировать OAuth2 ID" title="Сгенерировать OAuth2 ID">
+                                <i class="ti ti-refresh" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="md-field__hint">Идентификатор приложения в связке аккаунтов Яндекса.</div>
+                    </div>
+                    <div class="md-field">
+                        <label class="md-field__label" for="yh-client-key">OAuth2 KEY</label>
+                        <div class="md-input-shell">
+                            <input class="md-input" id="yh-client-key" type="text" name="client_key" value="[#CLIENT_KEY#]" maxlength="100" spellcheck="false" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+                            <button class="md-input-shell__action" type="button" data-yh-generate="yh-client-key" aria-label="Сгенерировать OAuth2 KEY" title="Сгенерировать OAuth2 KEY">
+                                <i class="ti ti-refresh" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="md-field__hint">Секрет приложения. После смены нужно обновить связку в Яндекс Диалогах.</div>
+                    </div>
+                </div>
             </div>
-            <span class="btn btn-link" onclick="generateClientId();" title="Генерировать случайный"><i class="glyphicon glyphicon-refresh"></i></span>
-         </div>
-         <div class="form-group">
-            <label class="control-label">OAuth2 KEY навыка
-               <span class='support-hover' tabindex="1" data-title="Секретный ключ (Client Password) навыка, по которому модуль авторизует запросы от Yandex. Указывается в настройках навыка при его создании в личном кабинете Яндекс Диалоги.">
-                  <i class="glyphicon glyphicon-info-sign"></i>
-               </span>
-            </label>
-            <div class="col-lg-8">
-               <input class="form-control" type="text" name="client_key" id="client_key" value="[#if CLIENT_KEY!=""#][#CLIENT_KEY#][#endif#]" class="input">
+        </section>
+
+        <section class="md-card">
+            <header class="md-card__head">
+                <div class="md-card__titles">
+                    <div class="md-card__eyebrow">Уведомления</div>
+                    <h2 class="md-card__title">Reportable и режим работы</h2>
+                    <p class="md-card__subtitle">Callbacks позволяют отправлять изменения свойств в Яндекс без запроса Алисы.</p>
+                </div>
+            </header>
+            <div class="md-card__body">
+                <div class="md-yh-fields">
+                    <div class="md-field">
+                        <label class="md-field__label" for="yh-skill-token">Токен Яндекс Диалогов</label>
+                        <div class="md-field__control">
+                            <input class="md-input" id="yh-skill-token" type="text" name="skill_access_token" value="[#SKILL_ACCESS_TOKEN#]" maxlength="200" spellcheck="false" placeholder="OAuth-токен для Notification API">
+                        </div>
+                        <div class="md-field__hint">Нужен только для reportable-уведомлений.</div>
+                    </div>
+                    <div class="md-field">
+                        <label class="md-field__label" for="yh-skill-id">ID навыка</label>
+                        <div class="md-field__control">
+                            <input class="md-input" id="yh-skill-id" type="text" name="skill_id" value="[#SKILL_ID#]" maxlength="100" spellcheck="false" placeholder="Идентификатор навыка в Яндекс Диалогах">
+                        </div>
+                    </div>
+
+                    <label class="md-switch">
+                        <input type="checkbox" data-md-raw-checkbox name="readonly_mode" value="1"[#if READONLY_MODE="1"#] checked[#endif#]>
+                        <span class="md-switch__track" aria-hidden="true"><span class="md-switch__thumb"></span></span>
+                        <span class="md-switch__text">
+                            <span class="md-switch__label">Автономный режим</span>
+                            <span class="md-switch__desc">Запретить запись в свойства объектов: Алиса видит состояние, но не управляет.</span>
+                        </span>
+                    </label>
+
+                    <label class="md-switch">
+                        <input type="checkbox" data-md-raw-checkbox name="log_debmes" value="1"[#if LOG_DEBMES="1"#] checked[#endif#]>
+                        <span class="md-switch__track" aria-hidden="true"><span class="md-switch__thumb"></span></span>
+                        <span class="md-switch__text">
+                            <span class="md-switch__label">Отладка DebMes</span>
+                            <span class="md-switch__desc">Подробный журнал запросов, callback-ответов и изменений свойств.</span>
+                        </span>
+                    </label>
+
+                    <label class="md-switch">
+                        <input type="checkbox" data-md-raw-checkbox name="log_ping" value="1"[#if LOG_PING="1"#] checked[#endif#]>
+                        <span class="md-switch__track" aria-hidden="true"><span class="md-switch__thumb"></span></span>
+                        <span class="md-switch__text">
+                            <span class="md-switch__label">Логировать ping</span>
+                            <span class="md-switch__desc">Писать в журнал периодические проверки доступности навыка.</span>
+                        </span>
+                    </label>
+                </div>
             </div>
-            <span class="btn btn-link" onclick="generateClientKey();" title="Генерировать случайный"><i class="glyphicon glyphicon-refresh"></i></span>
-         </div>
-         <div class="form-group">
-            <label class="control-label">Токен уведомлений Яндекс
-               <span class='support-hover' tabindex="1" data-title="Токен Яндекс Диалогов для Notification service API. Используется только для reportable/callback.">
-                  <i class="glyphicon glyphicon-info-sign"></i>
-               </span>
-            </label>
-            <div class="col-lg-8">
-               <input class="form-control" type="text" name="skill_access_token" id="skill_access_token" value="[#if SKILL_ACCESS_TOKEN!=""#][#SKILL_ACCESS_TOKEN#][#endif#]" class="input">
+            <footer class="md-card__footer">
+                <button type="submit" class="md-btn md-btn--primary">
+                    <i class="ti ti-check" aria-hidden="true"></i><span class="md-btn__label">Сохранить настройки</span>
+                </button>
+            </footer>
+        </section>
+    </div>
+</form>
+
+<section class="md-card">
+    <header class="md-card__head">
+        <div class="md-card__titles">
+            <div class="md-card__eyebrow">Публикация</div>
+            <h2 class="md-card__title">Вебхуки навыка</h2>
+            <p class="md-card__subtitle">Эти три адреса указываются в консоли Яндекс Диалогов. Они должны открываться по HTTPS без запроса логина и пароля.</p>
+        </div>
+    </header>
+    <div class="md-card__body">
+        <div class="md-yh-webhooks">
+            <div class="md-yh-webhook">
+                <div class="md-yh-webhook__head"><span class="md-badge md-badge--outline">URL авторизации</span><span class="md-yh-webhook__path">/modules/yandexhome/authorize.php</span></div>
+                <div class="md-yh-webhook__row"><code>[#WEBHOOK_AUTHORIZE#]</code><button type="button" class="md-icon-btn md-icon-btn--sm" data-yh-copy="[#WEBHOOK_AUTHORIZE#]" aria-label="Скопировать URL авторизации" data-bs-toggle="tooltip" data-bs-title="Скопировать"><i class="ti ti-copy" aria-hidden="true"></i></button></div>
             </div>
-         </div>
-         <div class="form-group">
-            <label class="control-label">ID навыка/диалога
-               <span class='support-hover' tabindex="1" data-title="Идентификатор навыка в Яндекс Диалогах. Используется в URL /api/v1/skills/{skill_id}/callback/state для reportable.">
-                  <i class="glyphicon glyphicon-info-sign"></i>
-               </span>
-            </label>
-            <div class="col-lg-8">
-               <input class="form-control" type="text" name="skill_id" id="skill_id" value="[#if SKILL_ID!=""#][#SKILL_ID#][#endif#]" class="input">
-               <div class="alert alert-warning" style="margin-top: 10px; margin-bottom: 0px">
-                  Эти поля необязательны и нужны только для reportable/callback: автоматической отправки изменений устройств в Яндекс без запроса от Алисы. По текущей публичной документации Яндекса callback отправляется на <code>dialogs.yandex.net</code> с заголовком <code>Authorization: OAuth &lt;token&gt;</code>. Если токен или ID навыка не указаны, модуль отдаст <code>reportable=false</code> и не будет отправлять callback.
-               </div>
+            <div class="md-yh-webhook">
+                <div class="md-yh-webhook__head"><span class="md-badge md-badge--outline">URL токена</span><span class="md-yh-webhook__path">/modules/yandexhome/token.php</span></div>
+                <div class="md-yh-webhook__row"><code>[#WEBHOOK_TOKEN#]</code><button type="button" class="md-icon-btn md-icon-btn--sm" data-yh-copy="[#WEBHOOK_TOKEN#]" aria-label="Скопировать URL токена" data-bs-toggle="tooltip" data-bs-title="Скопировать"><i class="ti ti-copy" aria-hidden="true"></i></button></div>
             </div>
-         </div>
-         <div class="form-group">
-            <label class="control-label">Представление
-               <span class='support-hover' tabindex="1" data-title="Стиль отображения списка устройств на главной странице модуля. Табличный вид - без группировки и с группировкой по местоположению. Панельный вид - без группировки и с группировкой по местоположению.">
-                  <i class="glyphicon glyphicon-info-sign"></i>
-               </span>
-            </label>
-            <div class="col-lg-8">
-               <select name="view_style" class="form-control">
-                  <option value="table" [#if VIEW_STYLE="table"#] selected[#endif#]>Таблица</option>
-                  <option value="table_group" [#if VIEW_STYLE="table_group"#] selected[#endif#]>Таблица с группировкой</option>
-                  <option value="panels" [#if VIEW_STYLE="panels"#] selected[#endif#]>Панели</option>
-                  <option value="panels_group" [#if VIEW_STYLE="panels_group" OR VIEW_STYLE=""#] selected[#endif#]>Панели с группировкой</option>
-               </select>
+            <div class="md-yh-webhook">
+                <div class="md-yh-webhook__head"><span class="md-badge md-badge--outline">Endpoint навыка</span><span class="md-yh-webhook__path">/modules/yandexhome/smarthome.php</span></div>
+                <div class="md-yh-webhook__row"><code>[#WEBHOOK_SMARTHOME#]</code><button type="button" class="md-icon-btn md-icon-btn--sm" data-yh-copy="[#WEBHOOK_SMARTHOME#]" aria-label="Скопировать endpoint навыка" data-bs-toggle="tooltip" data-bs-title="Скопировать"><i class="ti ti-copy" aria-hidden="true"></i></button></div>
             </div>
-         </div>
-         <div class="form-group">
-            <div class="controls"><input type="checkbox" name="readonly_mode" value="1"[#if READONLY_MODE="1"#] checked[#endif#]>
-               Автономный режим
-               <span class='support-hover' tabindex="1" data-title="При активации модуль переходит в режим &quot;только чтение&quot; и не реагирует на входящие команды управления устройствами (не выполняется запись в свойство объекта, привязанное к умению).">
-                  <i class="glyphicon glyphicon-info-sign"></i>
-               </span>
+        </div>
+        <div class="md-alert md-alert--info md-yh-webhook-note">
+            <i class="ti ti-shield-lock" aria-hidden="true"></i>
+            <div>Проверьте адреса снаружи: <code>curl -I [#WEBHOOK_SMARTHOME#]</code>. Ошибка авторизации reverse proxy сломает связку аккаунтов.</div>
+        </div>
+    </div>
+</section>
+
+<div class="md-yh-form-grid">
+    <section class="md-card">
+        <header class="md-card__head">
+            <div class="md-card__titles">
+                <div class="md-card__eyebrow">Диагностика</div>
+                <h2 class="md-card__title">Служебная информация</h2>
+                <p class="md-card__subtitle">Токены показываются частично: полные значения остаются в базе.</p>
             </div>
-         </div>
-         <div class="form-group">
-            <div class="controls"><input type="checkbox" name="log_debmes" value="1"[#if LOG_DEBMES="1"#] checked[#endif#]>
-               Отладка DebMes <span class="btn btn-link" data-toggle="modal" data-target="#module_info" title="Показать служебную информацию"><i class="glyphicon glyphicon-list-alt"></i></span>
+        </header>
+        <div class="md-card__body">
+            <dl class="md-yh-meta">
+                <div><dt>ID пользователя</dt><dd><code>[#USER_ID#]</code></dd></div>
+                <div><dt>OAuth2 ID</dt><dd><code>[#if CLIENT_ID!=""#][#CLIENT_ID#][#else#]—[#endif#]</code></dd></div>
+                <div><dt>Access token</dt><dd><code>[#if OAUTH_ACCESS_TOKEN!=""#][#OAUTH_ACCESS_TOKEN#][#else#]—[#endif#]</code></dd></div>
+                <div><dt>Access истекает</dt><dd>[#if OAUTH_ACCESS_EXPIRES!=""#]<code>[#OAUTH_ACCESS_EXPIRES#]</code>[#else#]—[#endif#]</dd></div>
+                <div><dt>Refresh token</dt><dd><code>[#if OAUTH_REFRESH_TOKEN!=""#][#OAUTH_REFRESH_TOKEN#][#else#]—[#endif#]</code></dd></div>
+                <div><dt>Refresh истекает</dt><dd>[#if OAUTH_REFRESH_EXPIRES!=""#]<code>[#OAUTH_REFRESH_EXPIRES#]</code>[#else#]—[#endif#]</dd></div>
+                <div><dt>Redirect URI</dt><dd><code>[#if OAUTH_REDIRECT_URI!=""#][#OAUTH_REDIRECT_URI#][#else#]—[#endif#]</code></dd></div>
+                <div><dt>Устройств</dt><dd>[#DEVICES_TOTAL#] · фейковых: [#FAKE_DEVICES_TOTAL#]</dd></div>
+            </dl>
+        </div>
+    </section>
+
+    <section class="md-card md-yh-maintenance">
+        <header class="md-card__head">
+            <div class="md-card__titles">
+                <div class="md-card__eyebrow">Обслуживание</div>
+                <h2 class="md-card__title">Действия</h2>
+                <p class="md-card__subtitle">Операции для диагностики и повторной синхронизации с Яндексом.</p>
             </div>
-         </div>
-         <div class="form-group">
-            <div class="controls"><input type="checkbox" name="log_ping" value="1"[#if LOG_PING="1"#] checked[#endif#]>
-               Включать в лог <b>ping</b>-запросы
+        </header>
+        <div class="md-card__body">
+            <div class="md-yh-actions">
+                <a href="?view_mode=test_callback" class="md-btn md-btn--secondary" data-md-confirm="Отправить discovery-callback в Яндекс? Потребуется токен и ID навыка.">
+                    <i class="ti ti-send" aria-hidden="true"></i><span class="md-btn__label">Проверить callback</span>
+                </a>
+                <a href="?view_mode=run_migration" class="md-btn md-btn--secondary" data-md-confirm="Пересобрать CONFIG всех устройств по текущему каталогу умений?">
+                    <i class="ti ti-refresh" aria-hidden="true"></i><span class="md-btn__label">Пересобрать CONFIG</span>
+                </a>
+                <a href="?view_mode=create_fake_devices" class="md-btn md-btn--secondary" data-md-confirm="Создать фейковые устройства по всем типам для загрузки иконок в Яндекс?">
+                    <i class="ti ti-copy-plus" aria-hidden="true"></i><span class="md-btn__label">Создать фейки</span>
+                </a>
+                [#if FAKE_DEVICES_TOTAL!="0"#]
+                <a href="?view_mode=delete_fake_devices" class="md-btn md-btn--secondary" data-md-confirm="Удалить все фейковые устройства?">
+                    <i class="ti ti-copy-minus" aria-hidden="true"></i><span class="md-btn__label">Удалить фейки ([#FAKE_DEVICES_TOTAL#])</span>
+                </a>
+                [#endif#]
+                [#if OAUTH_EXISTS="1"#]
+                <a href="?view_mode=clear_oauth" class="md-btn md-btn--danger" data-md-confirm="Удалить сохранённые OAuth-токены? Пользователям придётся заново объединить аккаунты.">
+                    <i class="ti ti-key-off" aria-hidden="true"></i><span class="md-btn__label">Сбросить OAuth</span>
+                </a>
+                [#endif#]
             </div>
-         </div>
-         <div class="form-actions">
-            <button type="submit" name="subm" value="Submit" class="btn btn-primary"><#LANG_UPDATE#></button>
-            <input type="hidden" name="view_mode" value="update_settings">
-         </div>
-      </fieldset>
-   </form>
+            <p class="md-yh-maintenance__note">Discovery-callback в Яндекс отправляется автоматически после сохранения устройства, если настроены токен и ID навыка.</p>
+        </div>
+    </section>
 </div>
-
-<!--# Служебная информация модуля. #-->
-<div class="modal fade" id="module_info" tabindex="-1" role="dialog" aria-hidden="true">
-   <div class="modal-dialog">
-      <div class="modal-content">
-         <div class="modal-header">
-            <button class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"></span></button>
-            <h4 class="modal-title">Служебная информация</h4>
-         </div>
-         <div class="modal-body" style="padding-bottom: 10px; padding-top: 5px;">
-            <table>
-            <tbody>
-               <tr><td>Логин пользователя:</td><td><code>[#USER_NAME#]</code></td></tr>
-               <tr><td>ID пользователя:</td><td><code>[#USER_ID#]</code></td></tr>
-               <tr><td>OAuth2 ID:</td><td><code>[#CLIENT_ID#]</code></td></tr>
-               <tr><td>OAuth2 KEY:</td><td><code>[#CLIENT_KEY#]</code></td></tr>
-               <tr><td>ID навыка/диалога:</td><td><code>[#SKILL_ID#]</code></td></tr>
-               <tr><td>OAuth2 Access token:</td><td><code>[#ACCESS_TOKEN#]</code></td></tr>
-               <tr><td>OAuth2 Access token expires:</td><td><code>[#ACCESS_TOKEN_EXPIRES#]</code></td></tr>
-               <tr><td>OAuth2 Refresh token:</td><td><code>[#REFRESH_TOKEN#]</code></td></tr>
-               <tr><td>OAuth2 Refresh token expires:</td><td><code>[#REFRESH_TOKEN_EXPIRES#]</code></td></tr>
-               <tr><td>OAuth2 Authorization code:</td><td><code>[#AUTHORIZATION_CODE#]</code></td></tr>
-               <tr><td>OAuth2 Authorization code expires:</td><td><code>[#AUTHORIZATION_CODE_EXPIRES#]</code></td></tr>
-               <tr><td>OAuth2 Redirect URL:</td><td><code>[#REDIRECT_URI#]</code></td></tr>
-               <tr><td>Автономный режим:</td><td><code>[#READONLY_MODE#]</code></td></tr>
-               <tr><td>Отладка DebMes:</td><td><code>[#LOG_DEBMES#]</code></td></tr>
-               <tr><td>Включать в лог ping:</td><td><code>[#LOG_PING#]</code></td></tr>
-               <tr><td>Представление:</td><td><code>[#VIEW_STYLE#]</code></td></tr>
-            </tbody>
-            </table>
-         </div>
-      </div>
-   </div>
-</div>
-
-<script type="text/javascript">
-
-   function generateClientId() {
-
-      var url = '/ajax/yandexhome.html?op=generateClientId';
-
-      $('#client_id').val('');
-
-      $.ajax({
-         url: url,
-         cache: false,
-         success: function(html){
-            $('#client_id').val(html);
-         }
-      });
-   }
-
-   function generateClientKey() {
-
-      var url = '/ajax/yandexhome.html?op=generateClientKey';
-
-      $('#client_key').val('');
-
-      $.ajax({
-         url: url,
-         cache: false,
-         success: function(html){
-            $('#client_key').val(html);
-         }
-      });
-   }
-
-</script>

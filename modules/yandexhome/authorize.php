@@ -1,138 +1,160 @@
 <?php
+/**
+ * OAuth2 authorization page shown during Yandex account linking.
+ *
+ * This is a public page: it does not load the admin bundle and uses its own
+ * small stylesheet. Credentials are the module login/password, not the admin
+ * account.
+ *
+ * @package MajorDoMo
+ */
 
-require_once ('server.php');
+require_once __DIR__ . '/server.php';
 
 $request = OAuth2\Request::createFromGlobals();
-
-// Пишем в лог входящий запрос.
 $yandexhome->WriteLog($yandexhome->IncomingRequestFormat($request));
 
 $response = new OAuth2\Response();
-
-// Проверяем валидность запроса на авторизацию.
 if (!$server->validateAuthorizeRequest($request, $response)) {
-   // Если не валиден, то отправляем ответ с ошибкой и завершаем работу.
-   $response->send();
-   $yandexhome->WriteLog('authorize.php >>> ' . $server->getResponse());
-   die;
+    $response->send();
+    $yandexhome->WriteLog('authorize.php >>> invalid request');
+    exit;
 }
 
-$_SESSION['REQUEST_URI'] = isset($request->server['REQUEST_URI']) ? $request->server['REQUEST_URI'] : '';
-
-$user_name = $yandexhome->config['USER_NAME'];
-$user_pass = $yandexhome->config['USER_PASS'];
-
-if (isset($_SESSION['user']) && $_SESSION['user'] == $user_name) {
-   $_SESSION['AUTH'] = true;
-} else {
-   $_SESSION['AUTH'] = false;
+if (empty($_SESSION['yh_csrf'])) {
+    $_SESSION['yh_csrf'] = bin2hex(random_bytes(16));
 }
+$csrf = (string)$_SESSION['yh_csrf'];
+$csrfValid = isset($_POST['csrf']) && is_string($_POST['csrf']) && hash_equals($csrf, $_POST['csrf']);
 
-$user = $_SESSION['AUTH'] ? $user_name : null;
-
+$userName = (string)$yandexhome->config['USER_NAME'];
+$userPass = (string)$yandexhome->config['USER_PASS'];
+$auth = $userName !== '' && $userPass !== ''
+    && isset($_SESSION['user']) && hash_equals($userName, (string)$_SESSION['user']);
+$_SESSION['AUTH'] = $auth;
 $message = '';
 
 if (!empty($_SESSION['message'])) {
-   $message = $_SESSION['message'];
-   unset($_SESSION['message']);
+    $message = (string)$_SESSION['message'];
+    unset($_SESSION['message']);
 }
 
-if ($_SESSION['AUTH'] && isset($_POST['authorized'])) {
-   $is_authorized = ($_POST['authorized'] === 'yes'); // Если yes, то true, иначе false.
-   $log = $server->handleAuthorizeRequest($request, $response, $is_authorized);
-   $response->send();
-   unset($_SESSION['user']);
-   session_destroy();
-   $yandexhome->WriteLog('authorize.php >>> ' . $log);
-} else if (!$_SESSION['AUTH'] && isset($_POST['login']) && isset($_POST['password'])) {
-   // Если не авторизованы.
-   if(!empty($_POST['login']) && !empty($_POST['password']) && $user_name == $_POST['login']) {
-      // Если переданы логин/пароль, и пользователь с таким логином имеется в списке пользователей,
-      // то проверим корректность введенного пароля.
-      if($user_pass == $_POST['password']) {
-         // Пароль совпадает. Инициируем сессию.
-         $_SESSION['user'] = $_POST['login'];
-         $_SESSION['AUTH'] = true;
-         $user = $_SESSION['AUTH'] ? $user_name : null;
-      }
-   }
-   if(!isset($_SESSION['user']) || $_SESSION['user'] != $_POST['login']) {
-      // Авторизация не прошла. Сохраним ошибку.
-      $message = 'Неверный логин или пароль. Повторите попытку.';
-   }
+if ($auth && isset($_POST['authorized']) && $csrfValid) {
+    $isAuthorized = ($_POST['authorized'] === 'yes');
+    $server->handleAuthorizeRequest($request, $response, $isAuthorized);
+    $response->send();
+    unset($_SESSION['user'], $_SESSION['AUTH'], $_SESSION['yh_csrf']);
+    session_destroy();
+    $yandexhome->WriteLog('authorize.php >>> ' . ($isAuthorized ? 'granted' : 'denied'));
+    exit;
 }
 
-?>
+if (!$auth && isset($_POST['login'], $_POST['password'])) {
+    $attempts = isset($_SESSION['yh_login_attempts']) ? (int)$_SESSION['yh_login_attempts'] : 0;
+    $login = is_string($_POST['login']) ? trim($_POST['login']) : '';
+    $password = is_string($_POST['password']) ? (string)$_POST['password'] : '';
 
-<html lang = "ru">
+    if (!$csrfValid) {
+        $message = 'Сессия истекла. Обновите страницу и повторите попытку.';
+    } elseif ($userName !== '' && $userPass !== ''
+        && hash_equals($userName, $login) && hash_equals($userPass, $password)) {
+        session_regenerate_id(true);
+        $_SESSION['user'] = $userName;
+        $_SESSION['AUTH'] = true;
+        $_SESSION['yh_login_attempts'] = 0;
+        $auth = true;
+    } else {
+        $attempts++;
+        $_SESSION['yh_login_attempts'] = $attempts;
+        if ($attempts > 2) {
+            sleep(min($attempts, 5));
+        }
+        $message = 'Неверный логин или пароль. Повторите попытку.';
+    }
+}
 
+$clientId = isset($request->query['client_id']) ? (string)$request->query['client_id'] : '';
+$root = defined('ROOTHTML') ? (string)ROOTHTML : '/';
+$logo = rtrim($root, '/') . '/assets/img/modules/yandexhome.png';
+$css = rtrim($root, '/') . '/assets/modules/yandexhome/authorize.css';
+$font = rtrim($root, '/') . '/3rdparty/fonts/rubik/rubik.css';
+
+$e = static function ($value) {
+    return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+};
+?><!doctype html>
+<html lang="ru">
 <head>
-   <meta charset = "UTF-8">
-   <title>MajorDoMo | Connect</title>
-   <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-   <script src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-   <link rel = "stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-   <link rel = "stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-   <link rel = "stylesheet" href="css/style.css">
-   <meta name = "viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title><?= $auth ? 'Доступ к MajorDoMo' : 'Вход в MajorDoMo' ?></title>
+    <link rel="icon" href="<?= $e($logo) ?>">
+    <link rel="stylesheet" href="<?= $e($font) ?>">
+    <link rel="stylesheet" href="<?= $e($css) ?>">
 </head>
-
-<body class="login-page">
-
-<?php 
-
-   if($_SESSION['AUTH']) { //Если авторизованы ?>
-
-   <main>
-      <div class="login-block">
-         <div><img src="img/ylogo.png" alt="logo" width="100%"></div>
-         <h1>Здравствуйте, <?php echo $user; ?>!</h1>
-         <form method = "post">
+<body class="yh-auth">
+<main class="yh-auth__main">
+    <section class="yh-auth__card" aria-labelledby="yh-auth-title">
+        <header class="yh-auth__header">
+            <img class="yh-auth__logo" src="<?= $e($logo) ?>" width="48" height="48" alt="">
             <div>
-               Приложение <b>Yandex Home</b> запрашивает доступ к вашему аккаунту <b>MajorDoMo</b>, чтобы контролировать привязанные к нему устройства.
+                <div class="yh-auth__eyebrow">Yandex Home · MajorDoMo</div>
+                <h1 class="yh-auth__title" id="yh-auth-title">
+                    <?= $auth ? 'Подтвердите доступ' : 'Вход в аккаунт MajorDoMo' ?>
+                </h1>
             </div>
-            <br>
-            <div>
-               Предоставить доступ для <b>Yandex Home</b>?
-            </div>
-            <button class="btn btn-primary btn-block" type="submit" name="authorized" value="yes"><b>Предоставить</b></button>
-            <br>
-            <button class="btn btn-link" type="submit" name="authorized" value="no"><b>Отказать</b></button>
-         </form>
-         <h6>OAuth2 Client ID: <?php echo isset($request->query['client_id']) ? $request->query['client_id'] : ''; ?></h6>
-      </div>
-   </main>
-   
-   
-<?php } else { //Если не авторизованы ?>
+        </header>
 
-   <main>
-      <div class="login-block">
-         <img src="img/mlogo.png" alt="logo">
-         <h1>Вход в аккаунт MajorDoMo</h1>
-         <form method = "post">
-            <div class="form-group">
-               <div class="input-group">
-                  <span class="input-group-addon"><i class="fa fa-user ti-user"></i></span>
-                  <input type="text" name = "login" class="form-control" placeholder="Логин">
-               </div>
-            </div>
-            <hr class="hr-xs">
-            <div class="form-group">
-               <div class="input-group">
-                  <span class="input-group-addon"><i class="fa fa-lock ti-unlock"></i></span>
-                  <input type="password" name = "password" class="form-control" placeholder="Пароль">
-               </div>
-            </div>
-            <?php if (!empty($message)) { ?>
-               <p><?php echo $message; ?></p>
-            <?php } ?>
-            <button class="btn btn-primary btn-block" type="submit"><b>Войти</b></button>
-         </form>
-      </div>
-   </main>
+        <?php if ($message !== ''): ?>
+            <div class="yh-auth__alert" role="alert"><?= $e($message) ?></div>
+        <?php endif; ?>
 
-<?php } ?>
+        <?php if ($auth): ?>
+            <div class="yh-auth__body">
+                <p>Здравствуйте, <strong><?= $e($userName) ?></strong>!</p>
+                <p>Приложение <strong>Yandex Home</strong> запрашивает доступ к вашему аккаунту
+                    <strong>MajorDoMo</strong>, чтобы просматривать и менять состояние привязанных устройств.</p>
+                <div class="yh-auth__note">
+                    <span class="yh-auth__note-label">OAuth2 Client ID</span>
+                    <code><?= $e($clientId) ?></code>
+                </div>
+            </div>
+            <form method="post" class="yh-auth__actions">
+                <input type="hidden" name="csrf" value="<?= $e($csrf) ?>">
+                <button class="yh-auth__button yh-auth__button--primary" type="submit" name="authorized" value="yes">
+                    Предоставить доступ
+                </button>
+                <button class="yh-auth__button" type="submit" name="authorized" value="no">
+                    Отказать
+                </button>
+            </form>
+        <?php else: ?>
+            <div class="yh-auth__body">
+                <p>Введите логин и пароль, указанные в настройках модуля <strong>Yandex Home</strong>.
+                    Это отдельная учётная запись для связки аккаунтов, а не пароль администратора.</p>
+            </div>
+            <form method="post" class="yh-auth__form">
+                <input type="hidden" name="csrf" value="<?= $e($csrf) ?>">
+                <label class="yh-auth__field">
+                    <span class="yh-auth__label">Логин</span>
+                    <input class="yh-auth__input" type="text" name="login" autocomplete="username" required autofocus>
+                </label>
+                <label class="yh-auth__field">
+                    <span class="yh-auth__label">Пароль</span>
+                    <input class="yh-auth__input" type="password" name="password" autocomplete="current-password" required>
+                </label>
+                <button class="yh-auth__button yh-auth__button--primary yh-auth__button--block" type="submit">
+                    Войти
+                </button>
+            </form>
+        <?php endif; ?>
 
+        <footer class="yh-auth__footer">
+            <span>Защищённый OAuth 2.0 запрос</span>
+            <span>MajorDoMo</span>
+        </footer>
+    </section>
+</main>
 </body>
 </html>
