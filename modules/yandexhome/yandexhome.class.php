@@ -1434,6 +1434,13 @@ EOD;
      */
     private function absoluteUrl($path)
     {
+        $configuredBase = class_exists('\\MajorDoMo\\Core\\Config')
+            ? trim(\MajorDoMo\Core\Config::string('BASE_URL'))
+            : '';
+        if ($configuredBase !== '') {
+            return rtrim($configuredBase, '/') . '/' . ltrim((string)$path, '/');
+        }
+
         $scheme = 'http';
         if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
             $scheme = 'https';
